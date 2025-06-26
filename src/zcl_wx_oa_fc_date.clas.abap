@@ -7,9 +7,10 @@ CLASS zcl_wx_oa_fc_date DEFINITION
 
     INTERFACES zif_wx_oa_fc .
 
-    TYPES: BEGIN OF ENUM t_type,
-             day, hour,
-           END OF ENUM t_type.
+    TYPES:
+      BEGIN OF ENUM t_type,
+        day, hour,
+      END OF ENUM t_type .
 
     DATA control TYPE string VALUE `Date` ##NO_TEXT.
     DATA id TYPE string .
@@ -24,7 +25,11 @@ CLASS zcl_wx_oa_fc_date DEFINITION
     METHODS constructor
       IMPORTING
         !id   TYPE string
-        !type TYPE t_type.
+        !type TYPE t_type .
+
+    METHODS set
+      IMPORTING
+        !data TYPE data.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -45,5 +50,11 @@ CLASS ZCL_WX_OA_FC_DATE IMPLEMENTATION.
         me->value-date-type = 'hour'.
       WHEN OTHERS.
     ENDCASE.
+  ENDMETHOD.
+
+
+  METHOD set.
+
+    me->value-date-s_timestamp = data.
   ENDMETHOD.
 ENDCLASS.
