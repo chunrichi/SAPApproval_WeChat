@@ -3,7 +3,7 @@
 *&---------------------------------------------------------------------*
 *& 工具 获取审批信息
 *&---------------------------------------------------------------------*
-REPORT ztool_wechat_approval_temp.
+REPORT ztool_wx_approval_temp.
 
 " 账号密码暂使用明文
 
@@ -70,7 +70,7 @@ DATA: gr_abap_edit TYPE REF TO cl_gui_abapedit,
 *                     Select Screen
 *&----------------------------------------------------------------------
 SELECTION-SCREEN BEGIN OF BLOCK blck1 WITH FRAME.
-PARAMETERS: p_tempid TYPE text200 DEFAULT `C4ZXKAttHPFgVA7gQh57zwCgzgeMQ9BN4aC3BVbud`.
+  PARAMETERS: p_tempid TYPE text200 DEFAULT `3WN63LowpfnXkcDgnz8kfZMZ7Uq5w78fswFS8tvb`.
 
 SELECTION-SCREEN END OF BLOCK blck1.
 
@@ -95,7 +95,7 @@ CLASS lcl_event_receiver DEFINITION.
   PUBLIC SECTION.
     METHODS:
       handle_close
-                    FOR EVENT close OF cl_gui_dialogbox_container
+        FOR EVENT close OF cl_gui_dialogbox_container
         IMPORTING sender.
 
     DATA: dialogbox_status TYPE c.  "'X': does exist, SPACE: does not ex.
@@ -192,47 +192,29 @@ FORM frm_load_template_info .
     ENDIF.
   END-OF-DEFINITION.
 
-  APPEND |" ------------------- 接口初始化 ----------------------| TO lt_string.
-  APPEND |DATA(l_approval) = NEW zcl_wechat_approval( corpid = `fixme` corpsecret = `fixme` ).| TO lt_string.
+  APPEND |DATA(l_approval) = NEW zcl_wx_approval( ).| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
-  APPEND |" ------------------- 审批赋值 ----------------------| TO lt_string.
   _read_text ls_res-template_names.
   APPEND |" 审批标题: { ls_text-text }| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
-  APPEND |" ------------------- 基础赋值 ----------------------| TO lt_string.
-  APPEND |DATA(l_fc) = NEW zcl_wx_oa_ft( ).| TO lt_string.
-  APPEND `" 申请人userid` TO lt_string.
-  APPEND |l_fc->creator_userid        = l_approval->userid( ).| TO lt_string.
+  APPEND |DATA(l_ft) = NEW zcl_wx_oa_ft(| TO lt_string.
+  APPEND |  template_id = '{ p_tempid }'| TO lt_string.
+  APPEND |).| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
-  APPEND `" 模板id` TO lt_string.
-  APPEND |l_fc->template_id           = '{ p_tempid }'.| TO lt_string.
+  APPEND |" 申请人userid| TO lt_string.
+  APPEND |l_ft->creator_userid = l_approval->userid( ).| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
-  APPEND `" 审批人模式：0 指定、1 使用模板` TO lt_string.
-  APPEND |l_fc->use_template_approver = { 1 }. | TO lt_string.
-  APPEND INITIAL LINE TO lt_string.
 
-  APPEND `" 提单者提单部门id，不填默认为主部门` TO lt_string.
-  APPEND |" l_fc->choose_department   = { 2 }.| TO lt_string.
-  APPEND INITIAL LINE TO lt_string.
-
-  APPEND |" ------------------- 流程列表 ----------------------| TO lt_string.
-  APPEND `" use_template_approver = 0 时必填` TO lt_string.
-  APPEND `" 暂不支持` TO lt_string.
-  APPEND INITIAL LINE TO lt_string.
-
-  APPEND |" ------------------- 摘要信息 ----------------------| TO lt_string.
-  APPEND `" 摘要信息，用于显示在审批通知卡片、审批列表的摘要信息，最多3行` TO lt_string.
-  APPEND `APPEND VALUE #( summary_info = VALUE #( ( text = '摘要1' lang = 'zh_CN' ) ) ) TO l_fc->summary_list.` TO lt_string.
+  APPEND |" 摘要信息| TO lt_string.
+  APPEND `l_ft->set_summary( VALUE #( ( text = '摘要1' lang = 'zh_CN' ) ) ).` TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
   APPEND |" ------------------- 控件赋值 ----------------------| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
-
-  APPEND `DATA: l_if_fc TYPE REF TO zif_wx_oa_fc.` TO lt_string.
 
   LOOP AT ls_res-template_content-controls INTO DATA(ls_tmpc).
     DATA(l_index) = CONV numc2( sy-tabix ).
@@ -246,8 +228,6 @@ FORM frm_load_template_info .
       CLEAR l_init_info.
     ENDIF.
 
-    APPEND |DATA({ l_name }) = NEW zcl_wx_oa_fc_{ to_lower( ls_tmpc-property-control ) }( id = `{ ls_tmpc-property-id }`{ l_init_info }).| TO lt_string.
-
     " 必输 / 非必输
     IF ls_tmpc-property-require = 0.
       DATA(l_reqire) = `" `.
@@ -257,15 +237,20 @@ FORM frm_load_template_info .
       APPEND `" 赋值:必输` TO lt_string.
     ENDIF.
 
+    APPEND |{ l_reqire } DATA({ l_name }) = NEW zcl_wx_oa_fc_{ to_lower( ls_tmpc-property-control )
+    }( { COND #( WHEN l_init_info IS INITIAL
+                 THEN ''
+                 ELSE 'id = ' ) }`{ ls_tmpc-property-id }`{ l_init_info }| TO lt_string.
+
     CASE ls_tmpc-property-control.
       WHEN `Text` OR `Textarea`.
-        APPEND |{ l_reqire }{ l_name }->value-text = '<fixme>'.| TO lt_string.
+        APPEND |{ l_reqire })->set( '<fixme>' ).| TO lt_string.
       WHEN `Number`.
-        APPEND |{ l_reqire }{ l_name }->value-new_number = '<fixme>'.| TO lt_string.
+        APPEND |{ l_reqire })->set( '<fixme>' ).| TO lt_string.
       WHEN `Money`.
-        APPEND |{ l_reqire }{ l_name }->value-new_money = '<fixme>'.| TO lt_string.
+        APPEND |{ l_reqire })->set( '<fixme>' ).| TO lt_string.
       WHEN `Date`.
-        APPEND |{ l_reqire }{ l_name }->value-date-s_timestamp = <fixme>.| TO lt_string.
+        APPEND |{ l_reqire })->set( '<fixme>' ).| TO lt_string.
       WHEN `Selector`.
         IF ls_tmpc-config[ 1 ]-config-type = `single`.
           DATA(l_selector) = `" `.
@@ -292,16 +277,14 @@ FORM frm_load_template_info .
     ENDCASE.
 
     " 添加到正文
-    APPEND `" 数据写入内容` TO lt_string.
-    APPEND |{ l_reqire }l_if_fc ?= { l_name }.| TO lt_string.
-    APPEND |{ l_reqire }APPEND l_if_fc TO l_fc->apply_data-contents.| TO lt_string.
+    APPEND |{ l_reqire }APPEND CAST zif_wx_oa_fc( { l_name } ) TO l_ft->apply_data-contents.| TO lt_string.
 
     APPEND INITIAL LINE TO lt_string.
 
   ENDLOOP.
 
   APPEND |" ------------------- 发起审批 ----------------------| TO lt_string.
-  APPEND `DATA(ls_result) = l_approval->send( EXPORTING data = l_fc ).` TO lt_string.
+  APPEND `DATA(ls_result) = l_approval->send( EXPORTING data = l_ft ).` TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
 
