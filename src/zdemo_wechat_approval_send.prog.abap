@@ -14,7 +14,7 @@ DATA(l_approval) = NEW zcl_wechat_approval(
 " 审批标题: 发文审批
 
 " ------------------- 基础赋值 ----------------------
-DATA(l_fc) = NEW zcl_wx_oa_fc( ).
+DATA(l_fc) = NEW zcl_wx_oa_ft( ).
 " 申请人userid
 l_fc->creator_userid        = l_approval->userid( ).
 
@@ -94,7 +94,6 @@ DATA(l_06_file) = NEW zcl_wx_oa_fc_file( id = `File-1573203844838`).
 " APPEND l_if_fc TO l_fc->apply_data-contents.
 
 " ------------------- 发起审批 ----------------------
-DATA: l_result TYPE string.
-l_approval->send( EXPORTING data = l_fc IMPORTING result = l_result ).
+DATA(ls_result) = l_approval->send( EXPORTING data = l_fc ).
 
 BREAK-POINT.

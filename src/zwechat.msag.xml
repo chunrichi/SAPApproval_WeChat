@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZWECHAT</ARBGB>
+    <MASTERLANG>1</MASTERLANG>
+    <STEXT>企业微信消息文本</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>000</MSGNR>
+     <TEXT>&amp;1 &amp;2 &amp;3 &amp;4</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>未找到 &amp; 的手机号</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>未维护企业微信应用信息</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>未找到满足条件的数据</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>http 请求异常 &amp;</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>

@@ -1,17 +1,25 @@
 CLASS zcl_wechat_approval DEFINITION
   PUBLIC
-  FINAL
   CREATE PUBLIC .
 
   PUBLIC SECTION.
 
-    TYPES: BEGIN OF ty_filter,
-             key   TYPE string,
-             value TYPE string,
-           END OF ty_filter,
-           tt_filters    TYPE STANDARD TABLE OF ty_filter WITH DEFAULT KEY,
-           tt_sp_no_list TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
-    DATA g_error_message TYPE string.
+    TYPES:
+      BEGIN OF ty_filter,
+        key   TYPE string,
+        value TYPE string,
+      END OF ty_filter .
+    TYPES:
+      tt_filters    TYPE STANDARD TABLE OF ty_filter WITH DEFAULT KEY .
+    TYPES:
+      tt_sp_no_list TYPE STANDARD TABLE OF string WITH DEFAULT KEY .
+    TYPES: BEGIN OF ty_instance_result,
+             errcode TYPE i,
+             errmsg  TYPE string,
+             sp_no   TYPE string,
+           END OF ty_instance_result.
+
+    DATA g_error_message TYPE string .
 
     METHODS constructor
       IMPORTING
@@ -19,33 +27,33 @@ CLASS zcl_wechat_approval DEFINITION
         !corpsecret TYPE any .
     METHODS send
       IMPORTING
-        !data   TYPE REF TO zcl_wx_oa_fc
-      EXPORTING
-        !result TYPE data.
+                !data         TYPE REF TO zcl_wx_oa_ft
+      RETURNING VALUE(result) TYPE ty_instance_result.
     METHODS read
       IMPORTING
         !sp_no  TYPE string
       EXPORTING
-        !result TYPE data.
+        !result TYPE data .
     METHODS list
       IMPORTING
-                !starttime        TYPE timestamp
-                !endtime          TYPE timestamp
-                !new_cursor       TYPE i
-                !size             TYPE i DEFAULT 100
-                !filters          TYPE tt_filters
+        !starttime        TYPE timestamp
+        !endtime          TYPE timestamp
+        !new_cursor       TYPE i
+        !size             TYPE i DEFAULT 100
+        !filters          TYPE tt_filters
       EXPORTING
-                subrc             TYPE sysubrc
-                next_cursor       TYPE i
-      RETURNING VALUE(sp_no_list) TYPE tt_sp_no_list.
+        !subrc            TYPE sysubrc
+        !next_cursor      TYPE i
+      RETURNING
+        VALUE(sp_no_list) TYPE tt_sp_no_list .
     METHODS userid
       IMPORTING
         !uname        TYPE syuname DEFAULT sy-uname
       RETURNING
         VALUE(userid) TYPE string .
   PROTECTED SECTION.
-  PRIVATE SECTION.
     DATA http TYPE REF TO zcl_wechat_http.
+  PRIVATE SECTION.
 ENDCLASS.
 
 
@@ -128,6 +136,8 @@ CLASS ZCL_WECHAT_APPROVAL IMPLEMENTATION.
 
     me->http->g_pretty_name = /ui2/cl_json=>pretty_mode-low_case.
 
+    ls_req-sp_no = sp_no.
+
     DATA(l_ecode) = me->http->post(
       EXPORTING
         url    = `https://qyapi.weixin.qq.com/cgi-bin/oa/getapprovaldetail`
@@ -136,10 +146,16 @@ CLASS ZCL_WECHAT_APPROVAL IMPLEMENTATION.
         result = result
     ).
 
+    IF l_ecode <> 200.
+      " http 请求异常
+      RAISE EXCEPTION TYPE zcx_wx_error MESSAGE e004(zwechat) WITH me->http->g_error_message.
+    ENDIF.
+
   ENDMETHOD.
 
 
   METHOD send.
+
     me->http->g_pretty_name = /ui2/cl_json=>pretty_mode-low_case.
 
     DATA(l_ecode) = me->http->post(
@@ -149,6 +165,11 @@ CLASS ZCL_WECHAT_APPROVAL IMPLEMENTATION.
       IMPORTING
         result = result
     ).
+
+    IF l_ecode <> 200 AND result-errmsg = 0.
+      result-errcode = 4.
+      result-errmsg = me->http->g_error_message.
+    ENDIF.
 
   ENDMETHOD.
 
@@ -165,19 +186,6 @@ CLASS ZCL_WECHAT_APPROVAL IMPLEMENTATION.
       WHERE us~bname = @uname
       INTO @DATA(ls_sap_info).
 
-    " 电话号码和缓存校验 => 一致则直接返回 userid
-    SELECT SINGLE
-      phone,
-      userid
-      FROM ztwx_user_info
-      WHERE uname = @uname
-      INTO @DATA(ls_info_cache).
-
-    IF ls_sap_info-phone = ls_info_cache-phone AND ls_info_cache-userid IS NOT INITIAL.
-      userid = ls_info_cache-userid.
-      RETURN.
-    ENDIF.
-
     " 取新值
     DATA(l_ecode) = me->http->userid(
       EXPORTING
@@ -185,20 +193,6 @@ CLASS ZCL_WECHAT_APPROVAL IMPLEMENTATION.
       IMPORTING
         userid = userid
     ).
-
-    DATA: ls_user_info TYPE ztwx_user_info.
-    IF l_ecode = 200.
-      ls_user_info-uname = uname.
-      ls_user_info-phone = ls_user_info-phone.
-      ls_user_info-userid = userid.
-
-      IF ls_info_cache-userid IS NOT INITIAL.
-        GET TIME STAMP FIELD ls_user_info-created_on.
-      ENDIF.
-      GET TIME STAMP FIELD ls_user_info-changed_on.
-
-      MODIFY ztwx_user_info FROM ls_user_info.
-    ENDIF.
 
   ENDMETHOD.
 ENDCLASS.

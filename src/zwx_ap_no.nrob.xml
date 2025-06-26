@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_NROB" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <ATTRIBUTES>
+    <OBJECT>ZWX_AP_NO</OBJECT>
+    <DOMLEN>ZDWXAP_NO</DOMLEN>
+    <PERCENTAGE>90.0</PERCENTAGE>
+    <BUFFER>X</BUFFER>
+    <NOIVBUFFER>00000003</NOIVBUFFER>
+    <UNAME>HAND_ABAP01</UNAME>
+    <UDATE>2025-06-25</UDATE>
+    <UTIME>13:10:07</UTIME>
+   </ATTRIBUTES>
+   <TEXT>
+    <LANGU>1</LANGU>
+    <OBJECT>ZWX_AP_NO</OBJECT>
+    <TXT>发起审批申请编号</TXT>
+    <TXTSHORT>申请编号</TXTSHORT>
+   </TEXT>
+  </asx:values>
+ </asx:abap>
+</abapGit>

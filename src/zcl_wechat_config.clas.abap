@@ -5,10 +5,12 @@ CLASS zcl_wechat_config DEFINITION
 
   PUBLIC SECTION.
 
-    CLASS-DATA config TYPE ztwx_config .
+    CLASS-DATA: BEGIN OF config,
+                  corp_id     TYPE string,
+                  corp_secret TYPE string,
+                END OF config.
 
     CLASS-METHODS class_constructor .
-    CLASS-METHODS load .
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -19,14 +21,9 @@ CLASS ZCL_WECHAT_CONFIG IMPLEMENTATION.
 
 
   METHOD class_constructor.
-    load( ).
 
-  ENDMETHOD.
-
-
-  METHOD load.
-
-    SELECT SINGLE * FROM ztwx_config WHERE sysid = @sy-sysid INTO @config.
+    config-corp_id     = `xxxxx`.
+    config-corp_secret = `xxxxxxxxxxx`.
 
   ENDMETHOD.
 ENDCLASS.

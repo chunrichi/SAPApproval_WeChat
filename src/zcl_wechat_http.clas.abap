@@ -17,6 +17,15 @@ CLASS zcl_wechat_http DEFINITION
     DATA g_read_mode TYPE /ui2/cl_json=>pretty_name_mode VALUE `` ##NO_TEXT.
     DATA g_error_message TYPE string .
 
+    DATA:
+      BEGIN OF token_cache,
+        timestamp TYPE timestamp,
+        token     TYPE string,
+      END OF token_cache .
+
+    EVENTS hook_cache_token_set.
+    EVENTS hook_cache_token_get.
+
     METHODS constructor
       IMPORTING
         !corpid     TYPE any
@@ -50,13 +59,8 @@ CLASS zcl_wechat_http DEFINITION
   PROTECTED SECTION.
   PRIVATE SECTION.
 
-    DATA: corpid     TYPE string, " 企业 ID
-          corpsecret TYPE string. " 应用的凭证密钥
-
-    DATA: BEGIN OF token_cache,
-            timestamp TYPE timestamp,
-            token     TYPE string,
-          END OF token_cache.
+    DATA corpid TYPE string .
+    DATA corpsecret TYPE string .     " 企业 ID " 应用的凭证密钥
 
     METHODS request
       IMPORTING
@@ -103,6 +107,9 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
     ENDIF.
 
     " TODO: 缓存取值 =》从自建表拉取
+    RAISE EVENT hook_cache_token_get.
+
+    CHECK me->token_cache IS INITIAL.
 
     " 重置取值
     GET TIME STAMP FIELD l_timestamp_now.
@@ -122,6 +129,7 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
       me->token_cache-timestamp = cl_abap_tstmp=>add_to_short( tstmp = l_timestamp_now secs = result-expires_in ).
     ENDIF.
 
+    RAISE EVENT hook_cache_token_set.
   ENDMETHOD.
 
 
@@ -130,7 +138,6 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
     me->corpid     = corpid.
     me->corpsecret = corpsecret.
 
-    me->access_token( ).
   ENDMETHOD.
 
 
@@ -210,6 +217,8 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
     CALL METHOD cl_http_client=>create_by_url
       EXPORTING
         url                = lv_url
+        proxy_host         = 'proxy'
+        proxy_service      = '3128'
       IMPORTING
         client             = lr_http_client
       EXCEPTIONS
