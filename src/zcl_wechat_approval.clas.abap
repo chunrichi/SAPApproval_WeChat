@@ -15,8 +15,8 @@ CLASS zcl_wechat_approval DEFINITION
 
     METHODS constructor
       IMPORTING
-        !corpid     TYPE string
-        !corpsecret TYPE string .
+        !corpid     TYPE any
+        !corpsecret TYPE any .
     METHODS send
       IMPORTING
         !data   TYPE REF TO zcl_wx_oa_fc
@@ -76,16 +76,16 @@ CLASS ZCL_WECHAT_APPROVAL IMPLEMENTATION.
           END OF ls_res.
 
     CONVERT TIME STAMP starttime TIME ZONE 'UTC' INTO DATE DATA(l_date) TIME DATA(l_time).
-    cl_pco_utility=>convert_abap_timestamp_to_java( EXPORTING iv_date = l_date
-                                                              iv_time = l_time
-                                                              iv_msec = 0
-                                               IMPORTING ev_timestamp = ls_req-starttime ).
+    cl_pco_utility=>convert_abap_timestamp_to_java( EXPORTING iv_date      = l_date
+                                                              iv_time      = l_time
+                                                              iv_msec      = 0
+                                                    IMPORTING ev_timestamp = ls_req-starttime ).
 
     CONVERT TIME STAMP endtime TIME ZONE 'UTC' INTO DATE l_date TIME l_time.
-    cl_pco_utility=>convert_abap_timestamp_to_java( EXPORTING iv_date = l_date
-                                                              iv_time = l_time
-                                                              iv_msec = 0
-                                               IMPORTING ev_timestamp = ls_req-endtime ).
+    cl_pco_utility=>convert_abap_timestamp_to_java( EXPORTING iv_date      = l_date
+                                                              iv_time      = l_time
+                                                              iv_msec      = 0
+                                                    IMPORTING ev_timestamp = ls_req-endtime ).
 
     ls_req-new_cursor = new_cursor.
     ls_req-size       = size.

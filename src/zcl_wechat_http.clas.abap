@@ -19,8 +19,8 @@ CLASS zcl_wechat_http DEFINITION
 
     METHODS constructor
       IMPORTING
-        !corpid     TYPE string
-        !corpsecret TYPE string .
+        !corpid     TYPE any
+        !corpsecret TYPE any .
     METHODS post
       IMPORTING
         !url           TYPE string
@@ -150,7 +150,7 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
         headers = headers
       IMPORTING
         result  = result
-     ).
+    ).
   ENDMETHOD.
 
 
@@ -172,7 +172,7 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
         data    = data
       IMPORTING
         result  = result
-     ).
+    ).
   ENDMETHOD.
 
 
@@ -188,8 +188,8 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
 
       CASE l_dt.
         WHEN 'l' OR 'u' OR 'v' OR 'h' OR 'r'. " data ref/flat struct/deep struct/table/classObject
-          l_req_json = /ui2/cl_json=>serialize( data = data
-                                        pretty_name = me->g_pretty_name ).
+          l_req_json = /ui2/cl_json=>serialize( data        = data
+                                                pretty_name = me->g_pretty_name ).
         WHEN OTHERS.
           l_req_json = data.
       ENDCASE.
@@ -278,8 +278,8 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lr_http_client->response->get_status( IMPORTING code = DATA(lv_status_code)
-                                                  reason = DATA(lv_status_reason) ).
+    lr_http_client->response->get_status( IMPORTING code   = DATA(lv_status_code)
+                                                    reason = DATA(lv_status_reason) ).
 
     ecode = lv_status_code.
     l_res_json = lr_http_client->response->get_cdata( ).
@@ -297,10 +297,11 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
     CASE l_dt.
       WHEN 'l' OR 'u' OR 'v' OR 'h' OR 'r'. " data ref/flat struct/deep struct/table/classObject
         /ui2/cl_json=>deserialize(
-                           EXPORTING
-                             json        = l_res_json
-                             pretty_name = me->g_read_mode
-                           CHANGING data = result ).
+          EXPORTING
+            json        = l_res_json
+            pretty_name = me->g_read_mode
+          CHANGING
+            data        = result ).
       WHEN OTHERS.
         result = l_res_json.
     ENDCASE.

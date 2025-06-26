@@ -7,8 +7,8 @@ REPORT zdemo_wechat_approval_send.
 
 " ------------------- 接口初始化 ----------------------
 DATA(l_approval) = NEW zcl_wechat_approval(
-    corpid     = `xxxxxxxx`
-    corpsecret = `xxxxxxxxxxxxxxxx` ).
+  corpid     = zcl_wechat_config=>config-corp_id
+  corpsecret = zcl_wechat_config=>config-corp_secret ).
 
 " ------------------- 审批赋值 ----------------------
 " 审批标题: 发文审批
@@ -19,7 +19,7 @@ DATA(l_fc) = NEW zcl_wx_oa_fc( ).
 l_fc->creator_userid        = l_approval->userid( ).
 
 " 模板id
-l_fc->template_id           = 'C4ZXKAttHPFgVA7gQh57zwCgzgeMQ9BN4aC3BVbud'.
+l_fc->template_id           = '3WN63LowpfnXkcDgnz8kfZMZ7Uq5w78fswFS8tvb'.
 
 " 审批人模式：0 指定、1 使用模板
 l_fc->use_template_approver = 1.

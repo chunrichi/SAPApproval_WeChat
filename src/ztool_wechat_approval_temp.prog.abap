@@ -145,9 +145,8 @@ FORM frm_load_template_info .
         END OF ls_res.
 
   DATA(l_client) = NEW zcl_wechat_http(
-    corpid     = `xxxxxxxx`
-    corpsecret = `xxxxxxxxxxxxxxxx`
-  ).
+    corpid     = zcl_wechat_config=>config-corp_id
+    corpsecret = zcl_wechat_config=>config-corp_secret ).
 
   DATA: BEGIN OF ls_req,
           template_id TYPE string,
@@ -284,6 +283,9 @@ FORM frm_load_template_info .
         APPEND |{ l_reqire }" file_type = '' " 可选| TO lt_string.
         APPEND |{ l_reqire }" file_url  = '' " 可选| TO lt_string.
         APPEND |{ l_reqire }) TO { l_name }->value-files.| TO lt_string.
+
+      WHEN `Table`.
+        " pass
 
       WHEN OTHERS.
         " 其他类型暂不支持
