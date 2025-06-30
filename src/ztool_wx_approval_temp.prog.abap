@@ -237,10 +237,14 @@ FORM frm_load_template_info .
       APPEND `" 赋值:必输` TO lt_string.
     ENDIF.
 
+    IF l_init_info IS INITIAL.
+      DATA(l_id_input) = ``.
+    ELSE.
+      l_id_input = ` id = `.
+    ENDIF.
+
     APPEND |{ l_reqire } DATA({ l_name }) = NEW zcl_wx_oa_fc_{ to_lower( ls_tmpc-property-control )
-    }( { COND #( WHEN l_init_info IS INITIAL
-                 THEN ''
-                 ELSE 'id = ' ) }`{ ls_tmpc-property-id }`{ l_init_info }| TO lt_string.
+    }( { l_id_input } `{ ls_tmpc-property-id }`{ l_init_info }| TO lt_string.
 
     CASE ls_tmpc-property-control.
       WHEN `Text` OR `Textarea`.
@@ -255,11 +259,14 @@ FORM frm_load_template_info .
         IF ls_tmpc-config[ 1 ]-config-type = `single`.
           DATA(l_selector) = `" `.
         ENDIF.
+
+        APPEND |{ l_reqire } )->set( VALUE #( | TO lt_string.
         LOOP AT ls_tmpc-config[ 1 ]-config-options INTO DATA(l_opt).
           _read_text l_opt-value.
-          APPEND |{ l_reqire }{ l_selector }APPEND VALUE #( key = '{ l_opt-key }' ) TO { l_name }->value-selector-options. " { ls_text-text }| TO lt_string.
+          APPEND |{ l_reqire }{ l_selector }  ( key = '{ l_opt-key }' ) " { ls_text-text }| TO lt_string.
           CLEAR l_selector.
         ENDLOOP.
+        APPEND |{ l_reqire } ). " { ls_text-text }| TO lt_string.
       WHEN `File`.
         APPEND |{ l_reqire }APPEND VALUE #(| TO lt_string.
         APPEND |{ l_reqire }  file_id   = '<fixme>' " 使用 zcl_wechat_approval->meida_upload( ) 上载获取| TO lt_string.
