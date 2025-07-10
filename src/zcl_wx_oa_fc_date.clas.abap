@@ -25,11 +25,12 @@ CLASS zcl_wx_oa_fc_date DEFINITION
     METHODS constructor
       IMPORTING
         !id   TYPE string
-        !type TYPE t_type .
+        !type TYPE t_type DEFAULT day.
 
     METHODS set
       IMPORTING
-        !data TYPE data.
+                !data           TYPE data
+      RETURNING VALUE(instance) TYPE REF TO zif_wx_oa_fc.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -54,7 +55,54 @@ CLASS ZCL_WX_OA_FC_DATE IMPLEMENTATION.
 
 
   METHOD set.
+    DATA: lv_timestamp  TYPE timestamp,
+          lv_timestamps TYPE string,
+          lv_datum      TYPE datum,
+          lv_uzeit      TYPE uzeit,
+          lv_unix       TYPE string.
 
-    me->value-date-s_timestamp = data.
+    DESCRIBE FIELD data TYPE DATA(l_type).
+
+    IF l_type = 'D'.
+      cl_pco_utility=>convert_abap_timestamp_to_java(
+        EXPORTING
+          iv_date      = data
+          iv_time      = '000000'
+        IMPORTING
+          ev_timestamp = lv_unix
+      ).
+    ELSEIF l_type = 'T'.
+      cl_pco_utility=>convert_abap_timestamp_to_java(
+        EXPORTING
+          iv_date      = sy-datum
+          iv_time      = data
+        IMPORTING
+          ev_timestamp = lv_unix
+      ).
+    ELSEIF l_type = 'P'.
+      lv_timestamps = |{ data }|.
+
+      IF strlen( lv_timestamps ) = 14.
+        lv_datum = lv_timestamps(8).
+        lv_uzeit = lv_timestamps+8.
+
+        " 日期 + 时间
+        cl_pco_utility=>convert_abap_timestamp_to_java(
+          EXPORTING
+            iv_date      = lv_datum
+            iv_time      = lv_uzeit
+          IMPORTING
+            ev_timestamp = lv_unix
+        ).
+      ENDIF.
+    ENDIF.
+
+    DATA(len) = strlen( lv_unix ) - 3.
+
+    IF len >= 0.
+      me->value-date-s_timestamp = lv_unix(len).
+    ENDIF.
+
+    instance = me.
   ENDMETHOD.
 ENDCLASS.

@@ -65,5 +65,7 @@ CLASS ZCL_WX_OA_FC_SELECTOR IMPLEMENTATION.
     " todo: 添加检查
 
     me->value-selector-options = data.
+
+    instance = me.
   ENDMETHOD.
 ENDCLASS.
