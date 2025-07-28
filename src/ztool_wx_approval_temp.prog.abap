@@ -31,10 +31,17 @@ TYPES: BEGIN OF ty_text,
        END OF ty_options,
        tt_options TYPE STANDARD TABLE OF ty_options WITH DEFAULT KEY,
 
+       BEGIN OF ty_children,
+         property TYPE ty_property,
+       END OF ty_children,
+       tt_children TYPE STANDARD TABLE OF ty_children WITH DEFAULT KEY,
+
+
        BEGIN OF ty_config_normal,
-         type    TYPE string,
-         mode    TYPE string,
-         options TYPE tt_options,
+         type     TYPE string,
+         mode     TYPE string,      " selector
+         options  TYPE tt_options,  " selector
+         children TYPE tt_children, " table
        END OF ty_config_normal,
        tt_config_normal TYPE STANDARD TABLE OF ty_config_normal WITH DEFAULT KEY,
 
@@ -180,7 +187,8 @@ FORM frm_load_template_info .
   ENDIF.
 
   " 将内容转换为代码
-  DATA: lt_string TYPE TABLE OF string.
+  DATA: lt_string TYPE TABLE OF string,
+        lv_string TYPE string.
   DATA: ls_text TYPE ty_text.
 
   DEFINE _read_text.
@@ -278,6 +286,23 @@ FORM frm_load_template_info .
 
       WHEN `Table`.
         " pass
+        APPEND |{ l_reqire }).| TO lt_string.
+
+        APPEND |" { l_name }->add( ).| TO lt_string.
+
+        LOOP AT ls_tmpc-config[ 1 ]-config-children INTO DATA(ls_children).
+          DATA(l_table_lname) = |l_{ sy-tabix }_{ to_lower( ls_children-property-control ) }|.
+
+          " APPEND |" DATA({ l_table_lname }) = NEW zcl_wx_oa_fc_{ to_lower( ls_children-property-control )
+          "     }( `{ ls_children-property-id }` )->set( <fixme> ).| TO lt_string.
+          lv_string = |" { l_name }->set( NEW zcl_wx_oa_fc_{ to_lower( ls_children-property-control )
+              }( `{ ls_children-property-id }` )->set( <fixme> ) ).|.
+
+          _read_text ls_children-property-title.
+          lv_string = lv_string && |" { ls_text-text }|.
+
+          APPEND lv_string TO lt_string.
+        ENDLOOP.
 
       WHEN OTHERS.
         " 其他类型暂不支持
