@@ -28,9 +28,10 @@ CLASS zcl_wx_approval_result DEFINITION
         !sp_no TYPE ztwx_approval-sp_no .
     METHODS unix2timestamp
       IMPORTING
-        !unix      TYPE int4
+        !unix       TYPE int4
       EXPORTING
-        !timestamp TYPE timestamp .
+        !timestamp  TYPE timestamp
+        !timestampl TYPE timestampl .
 ENDCLASS.
 
 
@@ -156,6 +157,10 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
       ls_approval-etatu = COND #( WHEN me->result-errcode = 0 THEN 'S' ELSE 'E' ).
       ls_approval-upd-etamp = abap_true.
       ls_approval-upd-etatu = abap_true.
+
+      unix2timestamp( EXPORTING unix       = me->result-info->sp_status
+                      IMPORTING timestampl = ls_approval-apamp ).
+      ls_approval-upd-apamp = abap_true.
 
       IF me->result-info IS BOUND.
         ls_approval-apsta = me->result-info->sp_status.
