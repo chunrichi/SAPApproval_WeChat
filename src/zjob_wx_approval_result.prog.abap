@@ -24,12 +24,17 @@ CLASS lcl_progress_bar DEFINITION DEFERRED.
 *&----------------------------------------------------------------------
 SELECTION-SCREEN BEGIN OF BLOCK blck1 WITH FRAME.
   SELECT-OPTIONS: s_sp_no FOR ztwx_approval-sp_no.
+  SELECT-OPTIONS: s_apsta FOR ztwx_approval-apsta.
 SELECTION-SCREEN END OF BLOCK blck1.
 
 *&----------------------------------------------------------------------
 *                     Initialization
 *&----------------------------------------------------------------------
 INITIALIZATION.
+
+  IF s_apsta[] IS INITIAL.
+    s_apsta[] = VALUE #( sign = 'I' option = 'LE' ( low = 1 ) ).
+  ENDIF.
 
 *&----------------------------------------------------------------------
 *                     At Selection-Screen Output
@@ -132,12 +137,13 @@ FORM frm_get_data .
     FROM ztwx_approval
     WHERE sp_no IN @s_sp_no
       AND statu = 'S'
-      AND apsta <= 1
+      AND apsta IN @s_apsta
     INTO TABLE @DATA(lt_sp_no).
 
   IF lt_sp_no IS INITIAL.
     " 未找到满足条件的数据
-    MESSAGE e003(zwechat).
+    MESSAGE s003(zwechat) DISPLAY LIKE 'E'.
+    STOP.
   ENDIF.
 
   DATA(lr_pb) = NEW lcl_progress_bar( i_count     = lines( lt_sp_no )

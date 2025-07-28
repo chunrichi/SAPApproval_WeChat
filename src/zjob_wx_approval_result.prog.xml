@@ -17,6 +17,13 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>S_APSTA</KEY>
+     <ENTRY>.</ENTRY>
+     <LENGTH>9</LENGTH>
+     <SPLIT>D</SPLIT>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>S_SP_NO</KEY>
      <ENTRY>.</ENTRY>
      <LENGTH>9</LENGTH>
