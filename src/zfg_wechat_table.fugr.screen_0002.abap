@@ -1,27 +1,27 @@
 PROCESS BEFORE OUTPUT.
- MODULE LISTE_INITIALISIEREN.
- LOOP AT EXTRACT WITH CONTROL
-  TCTRL_ZTWX_FT_CONF CURSOR NEXTLINE.
-   MODULE LISTE_SHOW_LISTE.
- ENDLOOP.
+  MODULE liste_initialisieren.
+  LOOP AT extract WITH CONTROL
+   tctrl_ztwx_ft_conf CURSOR nextline.
+    MODULE liste_show_liste.
+  ENDLOOP.
 *
 PROCESS AFTER INPUT.
- MODULE LISTE_EXIT_COMMAND AT EXIT-COMMAND.
- MODULE LISTE_BEFORE_LOOP.
- LOOP AT EXTRACT.
-   MODULE LISTE_INIT_WORKAREA.
-   CHAIN.
-    FIELD ZTWX_FT_CONF-APTYP .
-    FIELD ZTWX_FT_CONF-TP_ID .
-    FIELD ZTWX_FT_CONF-CLSNM .
-    FIELD ZTWX_FT_CONF-CHANGER .
-    FIELD ZTWX_FT_CONF-CHANGED_AT .
-    MODULE SET_UPDATE_FLAG ON CHAIN-REQUEST.
-   ENDCHAIN.
-   FIELD VIM_MARKED MODULE LISTE_MARK_CHECKBOX.
-   CHAIN.
-    FIELD ZTWX_FT_CONF-APTYP .
-    MODULE LISTE_UPDATE_LISTE.
-   ENDCHAIN.
- ENDLOOP.
- MODULE LISTE_AFTER_LOOP.
+  MODULE liste_exit_command AT EXIT-COMMAND.
+  MODULE liste_before_loop.
+  LOOP AT extract.
+    MODULE liste_init_workarea.
+    CHAIN.
+      FIELD ztwx_ft_conf-aptyp .
+      FIELD ztwx_ft_conf-aptnm .
+      FIELD ztwx_ft_conf-clsnm .
+      FIELD ztwx_ft_conf-changer .
+      FIELD ztwx_ft_conf-changed_at .
+      MODULE set_update_flag ON CHAIN-REQUEST.
+    ENDCHAIN.
+    FIELD vim_marked MODULE liste_mark_checkbox.
+    CHAIN.
+      FIELD ztwx_ft_conf-aptyp .
+      MODULE liste_update_liste.
+    ENDCHAIN.
+  ENDLOOP.
+  MODULE liste_after_loop.

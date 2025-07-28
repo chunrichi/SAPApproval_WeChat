@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_MSAG" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <T100A>
+    <ARBGB>ZWX01</ARBGB>
+    <MASTERLANG>1</MASTERLANG>
+    <STEXT>企业微信消息文本：wx 相关</STEXT>
+   </T100A>
+   <T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>001</MSGNR>
+     <TEXT>用户 id 获取失败</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>002</MSGNR>
+     <TEXT>审批发起成功</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>审批发起失败 &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>101</MSGNR>
+     <TEXT>请选择一行数据</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>102</MSGNR>
+     <TEXT>暂无操作</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>103</MSGNR>
+     <TEXT>请至少选择一行数据</TEXT>
+    </T100>
+   </T100>
+  </asx:values>
+ </asx:abap>
+</abapGit>
