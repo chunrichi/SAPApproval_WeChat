@@ -7,6 +7,7 @@ CLASS zcl_wx_approval DEFINITION
   PUBLIC SECTION.
 
     DATA approval TYPE ztwx_approval .
+    DATA log_data TYPE REF TO zcl_wx_log_data.
 
     METHODS constructor .
     METHODS set_aptyp
@@ -58,6 +59,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     SET HANDLER me->hook_cache->hook_cache_token_set FOR me->http.
 
     me->log_event = NEW #( ).
+    me->log_data = NEW #( ).
   ENDMETHOD.
 
 
@@ -81,7 +83,9 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       WHERE uname = @uname
       INTO @DATA(ls_info_cache).
 
-    IF ls_sap_info-phone = ls_info_cache-phone AND ls_info_cache-userid IS NOT INITIAL.
+    IF ls_sap_info-phone = ls_info_cache-phone
+      AND ls_sap_info-phone IS NOT INITIAL
+      AND ls_info_cache-userid IS NOT INITIAL.
       userid = ls_info_cache-userid.
       RETURN.
     ENDIF.
@@ -89,6 +93,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     IF ls_sap_info-phone IS INITIAL.
       " 未找到 & 的手机号
       RAISE EXCEPTION TYPE zcx_wx_error MESSAGE e001(zwechat) WITH uname.
+      " 报错在 send 中处理并记录，不再中断
     ENDIF.
 
     " 取新值
@@ -122,6 +127,9 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     me->approval-ap_no = lcl_snro=>next( ).
     me->log_event->ap_no = me->approval-ap_no.
 
+    me->log_data->ap_no = me->approval-ap_no.
+    me->log_data->log( ).
+
     GET TIME STAMP FIELD me->approval-stamp.
 
     me->approval-apsta = 'I'.
@@ -138,7 +146,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       IF 1 = 2. MESSAGE e001(zwx01) WITH sy-uname. ENDIF.
       me->log_event->log( evnid = 'e001' parms = sy-uname ).
     ELSE.
-    result = super->send( data ).
+      result = super->send( data ).
     ENDIF.
 
     IF result-errcode = 0.

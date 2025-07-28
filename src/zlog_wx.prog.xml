@@ -475,6 +475,16 @@
       <PATH>A</PATH>
      </RSMPE_FUNT>
      <RSMPE_FUNT>
+      <CODE>EVENLOG</CODE>
+      <TEXTNO>001</TEXTNO>
+      <TEXT_TYPE>S</TEXT_TYPE>
+      <TEXT_NAME>ICON_OPERATION</TEXT_NAME>
+      <ICON_ID>@9X@</ICON_ID>
+      <FUN_TEXT>操作记录</FUN_TEXT>
+      <ICON_TEXT>操作记录</ICON_TEXT>
+      <INFO_TEXT>操作记录</INFO_TEXT>
+     </RSMPE_FUNT>
+     <RSMPE_FUNT>
       <CODE>P+</CODE>
       <TEXTNO>001</TEXTNO>
       <TEXT_TYPE>S</TEXT_TYPE>
@@ -497,6 +507,16 @@
       <TEXTNO>001</TEXTNO>
       <TEXT_TYPE>S</TEXT_TYPE>
       <FUN_TEXT>第一页</FUN_TEXT>
+     </RSMPE_FUNT>
+     <RSMPE_FUNT>
+      <CODE>QUERY</CODE>
+      <TEXTNO>001</TEXTNO>
+      <TEXT_TYPE>S</TEXT_TYPE>
+      <TEXT_NAME>ICON_EXTENDED_SEARCH</TEXT_NAME>
+      <ICON_ID>@JH@</ICON_ID>
+      <FUN_TEXT>状态查询</FUN_TEXT>
+      <ICON_TEXT>状态查询</ICON_TEXT>
+      <INFO_TEXT>状态查询</INFO_TEXT>
      </RSMPE_FUNT>
     </FUN>
     <MEN>
@@ -1126,6 +1146,18 @@
       <NO>26</NO>
       <PFNO>S</PFNO>
      </RSMPE_BUT>
+     <RSMPE_BUT>
+      <PFK_CODE>000001</PFK_CODE>
+      <CODE>0001</CODE>
+      <NO>27</NO>
+      <PFNO>14</PFNO>
+     </RSMPE_BUT>
+     <RSMPE_BUT>
+      <PFK_CODE>000001</PFK_CODE>
+      <CODE>0001</CODE>
+      <NO>28</NO>
+      <PFNO>13</PFNO>
+     </RSMPE_BUT>
     </BUT>
     <PFK>
      <RSMPE_PFK>
@@ -1174,6 +1206,18 @@
       <CODE>000001</CODE>
       <PFNO>12</PFNO>
       <FUNCODE>&amp;F12</FUNCODE>
+      <FUNNO>001</FUNNO>
+     </RSMPE_PFK>
+     <RSMPE_PFK>
+      <CODE>000001</CODE>
+      <PFNO>13</PFNO>
+      <FUNCODE>EVENLOG</FUNCODE>
+      <FUNNO>001</FUNNO>
+     </RSMPE_PFK>
+     <RSMPE_PFK>
+      <CODE>000001</CODE>
+      <PFNO>14</PFNO>
+      <FUNCODE>QUERY</FUNCODE>
       <FUNNO>001</FUNNO>
      </RSMPE_PFK>
      <RSMPE_PFK>
@@ -1676,6 +1720,10 @@
      </RSMPE_STAF>
      <RSMPE_STAF>
       <STATUS>STANDARD</STATUS>
+      <FUNCTION>EVENLOG</FUNCTION>
+     </RSMPE_STAF>
+     <RSMPE_STAF>
+      <STATUS>STANDARD</STATUS>
       <FUNCTION>EXIT</FUNCTION>
      </RSMPE_STAF>
      <RSMPE_STAF>
@@ -1753,6 +1801,10 @@
      <RSMPE_STAF>
       <STATUS>STANDARD</STATUS>
       <FUNCTION>PRNT</FUNCTION>
+     </RSMPE_STAF>
+     <RSMPE_STAF>
+      <STATUS>STANDARD</STATUS>
+      <FUNCTION>QUERY</FUNCTION>
      </RSMPE_STAF>
      <RSMPE_STAF>
       <STATUS>STANDARD</STATUS>
@@ -1932,6 +1984,12 @@
      <KEY>017</KEY>
      <ENTRY>最后修改时间</ENTRY>
      <LENGTH>16</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>018</KEY>
+     <ENTRY>发送数据</ENTRY>
+     <LENGTH>14</LENGTH>
     </item>
     <item>
      <ID>R</ID>

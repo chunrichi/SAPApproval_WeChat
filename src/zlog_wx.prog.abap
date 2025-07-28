@@ -19,6 +19,7 @@ TYPES: BEGIN OF ty_display,
          docum      TYPE ztwx_approval-docum,       " 单据号
          stamp      TYPE ztwx_approval-stamp,       " 发起时间
          statu      TYPE ztwx_approval-statu,       " 发起状态
+         zfssj      TYPE char4,                     " 发送数据
          etamp      TYPE ztwx_approval-etamp,       " 返回时间
          etatu      TYPE ztwx_approval-etatu,       " 返回状态
          apsta      TYPE ztwx_approval-apsta,       " 审批状态
@@ -37,6 +38,8 @@ TYPES: BEGIN OF ty_display,
 
          style      TYPE lvc_t_styl,
          scolo      TYPE lvc_t_scol,
+
+         box        TYPE char1,
        END OF ty_display.
 
 *&----------------------------------------------------------------------
@@ -53,10 +56,10 @@ DATA: gt_display TYPE TABLE OF ty_display.
 SELECTION-SCREEN BEGIN OF BLOCK blck1 WITH FRAME.
   SELECT-OPTIONS: s_aptyp FOR ztwx_approval-aptyp,
                   s_ap_no FOR ztwx_approval-ap_no,
-                  s_sp_no FOR ztwx_approval-docum,
+                  s_sp_no FOR ztwx_approval-sp_no,
                   s_docum FOR ztwx_approval-docum,
-                  s_stamp FOR ztwx_approval-stamp,
-                  s_apusr FOR ztwx_approval-apusr,
+                  s_stamp FOR ztwx_approval-stamp MATCHCODE OBJECT cic_timestamp,
+                  s_apusr FOR ztwx_approval-apusr MATCHCODE OBJECT user_comp,
                   s_apsta FOR ztwx_approval-apsta.
 SELECTION-SCREEN END OF BLOCK blck1.
 
@@ -64,6 +67,7 @@ SELECTION-SCREEN END OF BLOCK blck1.
 *                     Initialization
 *&----------------------------------------------------------------------
 INITIALIZATION.
+  PERFORM frm_set_init.
 
 *&----------------------------------------------------------------------
 *                     At Selection-Screen Output
@@ -87,6 +91,23 @@ START-OF-SELECTION.
   PERFORM frm_set_layout.
   PERFORM frm_alv_display.
 
+
+*&---------------------------------------------------------------------*
+*& Form frm_set_init
+*&---------------------------------------------------------------------*
+*&  初始化赋值
+*&---------------------------------------------------------------------*
+FORM frm_set_init .
+  DATA: lv_timestamp TYPE timestamp.
+  DATA: lv_datum TYPE datum,
+        lv_uzeit TYPE uzeit.
+
+  lv_datum = sy-datum - 7.
+
+  CONVERT DATE lv_datum TIME lv_uzeit INTO TIME STAMP lv_timestamp TIME ZONE 'UTC+8'.
+  s_stamp[] = VALUE #( sign = 'I' option = 'GT' ( low = lv_timestamp ) ).
+
+ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form frm_get_data
 *&---------------------------------------------------------------------*
@@ -109,7 +130,8 @@ FORM frm_get_data .
 
   IF gt_display IS INITIAL.
     " 未找到满足条件的数据
-    MESSAGE e003(zwechat).
+    MESSAGE s003(zwechat) DISPLAY LIKE 'E'.
+    STOP.
   ENDIF.
 
   SELECT
@@ -171,6 +193,21 @@ FORM frm_fix_data .
 
   CHECK gt_display IS NOT INITIAL.
 
+  SELECT
+    ap_no
+    FROM ztwx_log_data
+    FOR ALL ENTRIES IN @gt_display
+    WHERE ap_no = @gt_display-ap_no
+    INTO TABLE @DATA(lt_log).
+  SORT lt_log BY ap_no.
+
+  LOOP AT gt_display REFERENCE INTO DATA(l_display).
+    READ TABLE lt_log WITH KEY ap_no = l_display->ap_no TRANSPORTING NO FIELDS BINARY SEARCH.
+    IF sy-subrc = 0.
+      l_display->zfssj = icon_abap.
+    ENDIF.
+  ENDLOOP.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form frm_alv_display
@@ -229,6 +266,7 @@ FORM frm_set_fieldcat .
   PERFORM frm_set_fcat USING 'DOCUM'      'ZTWX_APPROVAL' 'DOCUM'       TEXT-004. " 单据号
   PERFORM frm_set_fcat USING 'STAMP'      'ZTWX_APPROVAL' 'STAMP'       TEXT-005. " 发起时间
   PERFORM frm_set_fcat USING 'LOG_O'      ''               ''           TEXT-006. " 发起状态
+  PERFORM frm_set_fcat USING 'ZFSSJ'      ''               ''           TEXT-018. " 发送数据
   PERFORM frm_set_fcat USING 'ETAMP'      'ZTWX_APPROVAL' 'ETAMP'       TEXT-007. " 返回时间
   PERFORM frm_set_fcat USING 'LOG_I'      ''               ''           TEXT-008. " 返回状态
 * PERFORM frm_set_fcat USING 'APSTA'      'ZTWX_APPROVAL' 'APSTA'       TEXT-009. " 审批状态
@@ -270,12 +308,16 @@ FORM frm_set_fcat USING   p_fieldname TYPE lvc_s_fcat-fieldname
     <ls_fieldcat>-checkbox = 'X'.
   ENDIF.
 
-  IF p_fieldname = 'LOG_I' OR p_fieldname = 'LOG_O'.
+  IF p_fieldname = 'LOG_I' OR p_fieldname = 'LOG_O' OR p_fieldname = 'ZFSSJ'.
     <ls_fieldcat>-icon = 'X'.
   ENDIF.
 
   IF p_fieldname = 'APSTT'.
     <ls_fieldcat>-just = 'C'.
+  ENDIF.
+
+  IF p_fieldname = 'ZFSSJ'.
+    <ls_fieldcat>-hotspot = 'X'.
   ENDIF.
 
 ENDFORM.
@@ -291,6 +333,8 @@ FORM frm_set_layout .
                        cwidth_opt = 'X'
                        stylefname = 'STYLE'
                        ctab_fname = 'SCOLO'
+                       sel_mode   = 'B' " SINGLE
+                       box_fname  = 'BOX'
                      ).
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -338,6 +382,9 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
       READ TABLE gt_display INTO DATA(ls_display) INDEX ps_selfield-tabindex.
       IF sy-subrc = 0.
 
+        IF ps_selfield-fieldname = 'ZFSSJ'.
+          PERFORM frm_show_send_data USING ls_display-ap_no.
+        ENDIF.
 
       ENDIF.
     WHEN OTHERS.
@@ -456,5 +503,36 @@ FORM frm_load_new_state .
   SUBMIT zjob_wx_approval_result
     WITH SELECTION-TABLE lt_rspar_tab
     AND RETURN.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_show_send_data
+*&---------------------------------------------------------------------*
+*&  发送数据
+*&---------------------------------------------------------------------*
+FORM frm_show_send_data  USING p_ap_no TYPE ty_display-ap_no.
+  DATA: BEGIN OF ls_key,
+          ap_no TYPE ztwx_log_data-ap_no,
+        END OF ls_key.
+  DATA: lv_json TYPE string.
+
+  ls_key-ap_no = p_ap_no.
+
+  IMPORT json = lv_json FROM DATABASE ztwx_log_data(zz) ID ls_key.
+
+  IF sy-subrc = 0.
+
+    TRY.
+        CALL TRANSFORMATION sjson2html SOURCE XML lv_json
+          RESULT XML DATA(lv_html).
+      CATCH cx_xslt_runtime_error INTO DATA(lo_err).
+        DATA(lv_err_text) = lo_err->get_text( ).
+        MESSAGE lv_err_text TYPE 'S' DISPLAY LIKE 'E'.
+        RETURN .
+    ENDTRY.
+
+    DATA(lv_convert) = cl_abap_codepage=>convert_from( lv_html ).
+    cl_abap_browser=>show_html( html_string = lv_convert ).
+  ENDIF.
 
 ENDFORM.
