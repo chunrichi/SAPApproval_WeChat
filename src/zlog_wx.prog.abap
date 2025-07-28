@@ -327,6 +327,13 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
       PERFORM frm_fix_data.
 
       ps_selfield-refresh = 'X'.
+    WHEN 'EVENLOG'.
+
+      PERFORM frm_display_events.
+    WHEN 'QUERY'.
+
+      PERFORM frm_load_new_state.
+      p_ucomm = '&NTE'.
     WHEN '&IC1'.
       READ TABLE gt_display INTO DATA(ls_display) INDEX ps_selfield-tabindex.
       IF sy-subrc = 0.
@@ -339,4 +346,115 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
   " ps_selfield-refresh = 'X'.
   ps_selfield-col_stable = 'X' .
   ps_selfield-row_stable = 'X' .
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_display_events
+*&---------------------------------------------------------------------*
+*& 展示操作详情
+*&---------------------------------------------------------------------*
+FORM frm_display_events .
+  DATA: lv_lines TYPE i,
+        lt_event TYPE TABLE OF zswx_log_event.
+
+  LOOP AT gt_display TRANSPORTING NO FIELDS WHERE box = 'X'.
+    ADD 1 TO lv_lines.
+    CHECK lv_lines < 2.
+  ENDLOOP.
+  IF sy-subrc <> 0 OR lv_lines > 1.
+    " 请选择一行数据
+    MESSAGE e101(zwx01).
+  ENDIF.
+
+  DATA(ls_display) = gt_display[ box = 'X' ].
+
+  SELECT
+    evnnm,
+    evnid,
+    parms,
+    batch,
+    changer AS evnum,
+    changed_at AS evntm
+    FROM ztwx_log_event
+    WHERE ap_no = @ls_display-ap_no
+    INTO TABLE @DATA(lt_events).
+  IF sy-subrc <> 0.
+    " 暂无操作
+    MESSAGE e102(zwx01).
+  ENDIF.
+
+  LOOP AT lt_events REFERENCE INTO DATA(l_event).
+    APPEND CORRESPONDING #( l_event->* ) TO lt_event ASSIGNING FIELD-SYMBOL(<ls_event>).
+
+    IF l_event->evnid(1) = 'S'.
+      <ls_event>-icons = icon_led_green.
+    ELSEIF l_event->evnid(1) = 'E'.
+      <ls_event>-icons = icon_led_red.
+    ENDIF.
+
+    MESSAGE ID 'ZWX01' TYPE l_event->evnid(1) NUMBER l_event->evnid+1 WITH l_event->parms INTO <ls_event>-message.
+  ENDLOOP.
+
+
+  TRY.
+      cl_salv_table=>factory(
+        EXPORTING
+          list_display = ''
+        IMPORTING
+          r_salv_table = DATA(l_popup_alv)
+        CHANGING
+          t_table      = lt_event[] ).
+    CATCH cx_salv_msg.                                  "#EC NO_HANDLER
+  ENDTRY.
+
+
+  l_popup_alv->get_columns( )->set_optimize( abap_true ).
+
+  l_popup_alv->set_screen_popup(
+    start_line   = 10
+    start_column = 30
+    end_line     = 20
+    end_column   = 130 ).
+
+  DATA: lo_column TYPE REF TO cl_salv_column_list.
+  TRY.
+      lo_column ?= l_popup_alv->get_columns( )->get_column( 'BATCH' ).
+      lo_column->set_cell_type( if_salv_c_cell_type=>checkbox ).
+    CATCH cx_root.
+  ENDTRY.
+  TRY.
+      lo_column ?= l_popup_alv->get_columns( )->get_column( 'ICONS' ).
+      lo_column->set_icon( 'X' ).
+    CATCH cx_root.
+  ENDTRY.
+  TRY.
+      l_popup_alv->get_columns( )->get_column( 'EVNNM' )->set_alignment( if_salv_c_alignment=>centered ).
+    CATCH cx_root.
+  ENDTRY.
+
+  l_popup_alv->display( ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_load_new_state
+*&---------------------------------------------------------------------*
+*& 刷新状态
+*&---------------------------------------------------------------------*
+FORM frm_load_new_state .
+
+  IF NOT line_exists( gt_display[ box = 'X' ] ).
+    " 请至少选择一行数据
+    MESSAGE e103(zwx01).
+  ENDIF.
+
+  DATA: lt_rspar_tab TYPE TABLE OF rsparams.
+
+  lt_rspar_tab = VALUE #( FOR _ IN gt_display WHERE    ( box  = 'X' )
+                          selname = 'S_SP_NO'
+                          kind    = 'S'                ( sign = 'I' option = 'EQ' low = _-sp_no ) ).
+  APPEND VALUE #( selname = 'APSTA'
+                  kind    = 'S' sign = 'E' option = 'EQ' ) TO lt_rspar_tab.
+
+  SUBMIT zjob_wx_approval_result
+    WITH SELECTION-TABLE lt_rspar_tab
+    AND RETURN.
+
 ENDFORM.
