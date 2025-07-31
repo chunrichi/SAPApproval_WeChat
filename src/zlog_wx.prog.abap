@@ -34,6 +34,7 @@ TYPES: BEGIN OF ty_display,
 
          log_i      TYPE char4,
          log_o      TYPE char4,
+         nodes      TYPE char4,
          apstt      TYPE text10,
 
          style      TYPE lvc_t_styl,
@@ -148,6 +149,12 @@ FORM frm_get_data .
 
   LOOP AT gt_display ASSIGNING FIELD-SYMBOL(<ls_display>).
 
+    AUTHORITY-CHECK OBJECT 'S_TCODE'
+     ID 'TCD' FIELD <ls_display>-tcode.
+    IF sy-subrc <> 0.
+      CLEAR <ls_display>-ap_no.
+    ENDIF.
+
     READ TABLE lt_aptyp INTO DATA(ls_aptyp) WITH KEY aptyp = <ls_display>-aptyp BINARY SEARCH.
     IF sy-subrc = 0.
       <ls_display>-aptnm = ls_aptyp-aptnm.
@@ -155,6 +162,7 @@ FORM frm_get_data .
 
     IF <ls_display>-statu = 'S'.
       <ls_display>-log_o = icon_led_green.
+      <ls_display>-nodes = icon_wd_mapped_input_model_att.
     ELSE.
       <ls_display>-log_o = icon_led_red.
     ENDIF.
@@ -179,6 +187,8 @@ FORM frm_get_data .
       <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 6 ) ).
     ENDIF.
   ENDLOOP.
+
+  DELETE gt_display WHERE ap_no IS INITIAL.
 
   SORT gt_display BY stamp.
 
@@ -269,6 +279,7 @@ FORM frm_set_fieldcat .
   PERFORM frm_set_fcat USING 'ZFSSJ'      ''               ''           TEXT-018. " 发送数据
   PERFORM frm_set_fcat USING 'ETAMP'      'ZTWX_APPROVAL' 'ETAMP'       TEXT-007. " 返回时间
   PERFORM frm_set_fcat USING 'LOG_I'      ''               ''           TEXT-008. " 返回状态
+  PERFORM frm_set_fcat USING 'NODES'      ''               ''           TEXT-019. " 流程信息
 * PERFORM frm_set_fcat USING 'APSTA'      'ZTWX_APPROVAL' 'APSTA'       TEXT-009. " 审批状态
   PERFORM frm_set_fcat USING 'APSTT'      ''               ''           TEXT-009. " 审批状态
   PERFORM frm_set_fcat USING 'APAMP'      'ZTWX_APPROVAL' 'APAMP'       TEXT-010. " 审批时间
@@ -308,7 +319,8 @@ FORM frm_set_fcat USING   p_fieldname TYPE lvc_s_fcat-fieldname
     <ls_fieldcat>-checkbox = 'X'.
   ENDIF.
 
-  IF p_fieldname = 'LOG_I' OR p_fieldname = 'LOG_O' OR p_fieldname = 'ZFSSJ'.
+  IF p_fieldname = 'LOG_I' OR p_fieldname = 'LOG_O' OR p_fieldname = 'ZFSSJ'
+    OR p_fieldname = 'NODES'.
     <ls_fieldcat>-icon = 'X'.
   ENDIF.
 
@@ -316,7 +328,7 @@ FORM frm_set_fcat USING   p_fieldname TYPE lvc_s_fcat-fieldname
     <ls_fieldcat>-just = 'C'.
   ENDIF.
 
-  IF p_fieldname = 'ZFSSJ'.
+  IF p_fieldname = 'ZFSSJ' OR p_fieldname = 'NODES'.
     <ls_fieldcat>-hotspot = 'X'.
   ENDIF.
 
@@ -372,10 +384,13 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
 
       ps_selfield-refresh = 'X'.
     WHEN 'EVENLOG'.
-
+      " 操作记录
       PERFORM frm_display_events.
+    WHEN 'NODES'.
+      " 流程信息
+      PERFORM frm_display_nodes USING ''.
     WHEN 'QUERY'.
-
+      " 状态查询
       PERFORM frm_load_new_state.
       p_ucomm = '&NTE'.
     WHEN '&IC1'.
@@ -384,8 +399,9 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
 
         IF ps_selfield-fieldname = 'ZFSSJ'.
           PERFORM frm_show_send_data USING ls_display-ap_no.
+        ELSEIF ps_selfield-fieldname = 'NODES'.
+          PERFORM frm_display_nodes USING ls_display-sp_no.
         ENDIF.
-
       ENDIF.
     WHEN OTHERS.
   ENDCASE.
@@ -453,7 +469,6 @@ FORM frm_display_events .
     CATCH cx_salv_msg.                                  "#EC NO_HANDLER
   ENDTRY.
 
-
   l_popup_alv->get_columns( )->set_optimize( abap_true ).
 
   l_popup_alv->set_screen_popup(
@@ -481,6 +496,114 @@ FORM frm_display_events .
   l_popup_alv->display( ).
 ENDFORM.
 *&---------------------------------------------------------------------*
+*& Form frm_display_nodes
+*&---------------------------------------------------------------------*
+*&  节点
+*&---------------------------------------------------------------------*
+FORM frm_display_nodes USING p_sp_no TYPE ty_display-sp_no.
+  DATA: lv_lines TYPE i,
+        lt_nodes TYPE TABLE OF zswx_node_info,
+        lt_nodet TYPE TABLE OF zswx_node_infot.
+
+  IF p_sp_no IS INITIAL.
+    LOOP AT gt_display TRANSPORTING NO FIELDS WHERE box = 'X'.
+      ADD 1 TO lv_lines.
+      CHECK lv_lines < 2.
+    ENDLOOP.
+    IF sy-subrc <> 0 OR lv_lines > 1.
+      " 请选择一行数据
+      MESSAGE e101(zwx01).
+    ENDIF.
+
+    DATA(ls_display) = gt_display[ box = 'X' ].
+  ELSE.
+    ls_display-sp_no = p_sp_no.
+  ENDIF.
+
+  DATA(l_result) = NEW zcl_wx_approval_result( ).
+
+  l_result->load_approval_info( sp_no = ls_display-sp_no ).
+  COMMIT WORK.
+
+  LOOP AT l_result->result-info->process_list-node_list REFERENCE INTO DATA(l_node).
+
+    LOOP AT l_node->sub_node_list REFERENCE INTO DATA(l_sub).
+
+      APPEND VALUE #( nodet = l_node->node_type " 节点类型
+                      spsta = l_node->sp_status " 节点状态
+                      apvre = l_node->apv_rel   " 办理方式
+
+                      usrid = l_sub->userid     " 处理人信息
+                      sp_yj = l_sub->sp_yj      " 子节点状态
+                      speec = l_sub->speech     " 处理意见
+      ) TO lt_nodes REFERENCE INTO DATA(l_dis_node).
+
+      " 操作时间
+      l_result->unix2timestamp( EXPORTING unix       = l_sub->sptime
+                                IMPORTING timestampl = l_dis_node->sptim ).
+    ENDLOOP.
+  ENDLOOP.
+
+  DEFINE _load.
+    DATA(l_desc_&1) = CAST cl_abap_elemdescr( cl_abap_elemdescr=>describe_by_name( 'ZSWX_NODE_INFO-&1' ) ).
+    DATA(l_fixvals_&1) = l_desc_&1->get_ddic_fixed_values( p_langu = sy-langu ).
+    SORT l_fixvals_&1 BY low.
+  END-OF-DEFINITION.
+
+  DEFINE _read.
+    READ TABLE l_fixvals_&1 INTO DATA(l_fixval_&1) WITH KEY low = l_dis->&1 BINARY SEARCH.
+    IF sy-subrc = 0.
+      <ls_dis>-&1 = l_fixval_&1-ddtext.
+    ENDIF.
+  END-OF-DEFINITION.
+
+  _load nodet.
+  _load spsta.
+  _load apvre.
+  _load sp_yj.
+
+  LOOP AT lt_nodes REFERENCE INTO DATA(l_dis).
+    APPEND VALUE #( usrid = l_dis->usrid
+                    sptim = l_dis->sptim
+                    speec = l_dis->speec ) TO lt_nodet ASSIGNING FIELD-SYMBOL(<ls_dis>).
+
+    _read nodet.
+    _read spsta.
+    _read apvre.
+    _read sp_yj.
+  ENDLOOP.
+  FREE lt_nodes.
+
+  TRY.
+      cl_salv_table=>factory(
+        EXPORTING
+          list_display = ''
+        IMPORTING
+          r_salv_table = DATA(l_popup_alv)
+        CHANGING
+          t_table      = lt_nodet[] ).
+    CATCH cx_salv_msg.                                  "#EC NO_HANDLER
+  ENDTRY.
+
+  l_popup_alv->get_columns( )->set_optimize( abap_true ).
+
+  l_popup_alv->set_screen_popup(
+    start_line   = 10
+    start_column = 30
+    end_line     = 20
+    end_column   = 130 ).
+
+  TRY.
+      l_popup_alv->get_columns( )->get_column( 'NODET' )->set_alignment( if_salv_c_alignment=>centered ).
+      l_popup_alv->get_columns( )->get_column( 'SPSTA' )->set_alignment( if_salv_c_alignment=>centered ).
+      l_popup_alv->get_columns( )->get_column( 'APVRE' )->set_alignment( if_salv_c_alignment=>centered ).
+      l_popup_alv->get_columns( )->get_column( 'SP_YJ' )->set_alignment( if_salv_c_alignment=>centered ).
+    CATCH cx_root.
+  ENDTRY.
+
+  l_popup_alv->display( ).
+ENDFORM.
+*&---------------------------------------------------------------------*
 *& Form frm_load_new_state
 *&---------------------------------------------------------------------*
 *& 刷新状态
@@ -497,8 +620,8 @@ FORM frm_load_new_state .
   lt_rspar_tab = VALUE #( FOR _ IN gt_display WHERE    ( box  = 'X' )
                           selname = 'S_SP_NO'
                           kind    = 'S'                ( sign = 'I' option = 'EQ' low = _-sp_no ) ).
-  APPEND VALUE #( selname = 'APSTA'
-                  kind    = 'S' sign = 'E' option = 'EQ' ) TO lt_rspar_tab.
+  APPEND VALUE #( selname = 'S_APSTA'
+                  kind    = 'S' ) TO lt_rspar_tab.
 
   SUBMIT zjob_wx_approval_result
     WITH SELECTION-TABLE lt_rspar_tab

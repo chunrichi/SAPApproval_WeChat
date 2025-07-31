@@ -485,6 +485,16 @@
       <INFO_TEXT>操作记录</INFO_TEXT>
      </RSMPE_FUNT>
      <RSMPE_FUNT>
+      <CODE>NODES</CODE>
+      <TEXTNO>001</TEXTNO>
+      <TEXT_TYPE>S</TEXT_TYPE>
+      <TEXT_NAME>ICON_WD_MAPPED_INPUT_MODEL_ATT</TEXT_NAME>
+      <ICON_ID>@UY@</ICON_ID>
+      <FUN_TEXT>流程信息</FUN_TEXT>
+      <ICON_TEXT>流程信息</ICON_TEXT>
+      <INFO_TEXT>流程信息</INFO_TEXT>
+     </RSMPE_FUNT>
+     <RSMPE_FUNT>
       <CODE>P+</CODE>
       <TEXTNO>001</TEXTNO>
       <TEXT_TYPE>S</TEXT_TYPE>
@@ -1158,6 +1168,12 @@
       <NO>28</NO>
       <PFNO>13</PFNO>
      </RSMPE_BUT>
+     <RSMPE_BUT>
+      <PFK_CODE>000001</PFK_CODE>
+      <CODE>0001</CODE>
+      <NO>29</NO>
+      <PFNO>16</PFNO>
+     </RSMPE_BUT>
     </BUT>
     <PFK>
      <RSMPE_PFK>
@@ -1224,6 +1240,12 @@
       <CODE>000001</CODE>
       <PFNO>15</PFNO>
       <FUNCODE>&amp;F15</FUNCODE>
+      <FUNNO>001</FUNNO>
+     </RSMPE_PFK>
+     <RSMPE_PFK>
+      <CODE>000001</CODE>
+      <PFNO>16</PFNO>
+      <FUNCODE>NODES</FUNCODE>
       <FUNNO>001</FUNNO>
      </RSMPE_PFK>
      <RSMPE_PFK>
@@ -1760,6 +1782,10 @@
      </RSMPE_STAF>
      <RSMPE_STAF>
       <STATUS>STANDARD</STATUS>
+      <FUNCTION>NODES</FUNCTION>
+     </RSMPE_STAF>
+     <RSMPE_STAF>
+      <STATUS>STANDARD</STATUS>
       <FUNCTION>P+</FUNCTION>
      </RSMPE_STAF>
      <RSMPE_STAF>
@@ -1989,6 +2015,12 @@
      <ID>I</ID>
      <KEY>018</KEY>
      <ENTRY>发送数据</ENTRY>
+     <LENGTH>14</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>019</KEY>
+     <ENTRY>流程信息</ENTRY>
      <LENGTH>14</LENGTH>
     </item>
     <item>

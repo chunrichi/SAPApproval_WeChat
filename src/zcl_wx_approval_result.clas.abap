@@ -18,6 +18,12 @@ CLASS zcl_wx_approval_result DEFINITION
       IMPORTING
         !sp_no TYPE ztwx_approval-sp_no .
     METHODS cust_approval_result.
+    METHODS unix2timestamp
+      IMPORTING
+        !unix       TYPE int4
+      EXPORTING
+        !timestamp  TYPE timestamp
+        !timestampl TYPE timestampl .
   PROTECTED SECTION.
 
     DATA hook_cache TYPE REF TO zcl_wx_cache .
@@ -31,12 +37,6 @@ CLASS zcl_wx_approval_result DEFINITION
     METHODS upd_approval
       IMPORTING
         !sp_no TYPE ztwx_approval-sp_no .
-    METHODS unix2timestamp
-      IMPORTING
-        !unix       TYPE int4
-      EXPORTING
-        !timestamp  TYPE timestamp
-        !timestampl TYPE timestampl .
 ENDCLASS.
 
 
@@ -167,8 +167,8 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
 
       IF ls_approval-apamp IS INITIAL.
         unix2timestamp( EXPORTING unix       = last_approval_time( )
-                      IMPORTING timestampl = ls_approval-apamp ).
-      ls_approval-upd-apamp = abap_true.
+                        IMPORTING timestampl = ls_approval-apamp ).
+        ls_approval-upd-apamp = abap_true.
       ENDIF.
 
       IF me->result-info IS BOUND.

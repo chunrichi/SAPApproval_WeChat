@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_TRAN" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <TSTC>
+    <TCODE>ZJOB_WX_APPR_RESULT</TCODE>
+    <PGMNA>ZJOB_WX_APPROVAL_RESULT</PGMNA>
+    <DYPNO>1000</DYPNO>
+    <CINFO>gA==</CINFO>
+   </TSTC>
+   <TSTCC>
+    <TCODE>ZJOB_WX_APPR_RESULT</TCODE>
+   </TSTCC>
+   <TSTCT>
+    <SPRSL>1</SPRSL>
+    <TCODE>ZJOB_WX_APPR_RESULT</TCODE>
+    <TTEXT>定时任务 - 获取审批结果</TTEXT>
+   </TSTCT>
+  </asx:values>
+ </asx:abap>
+</abapGit>
