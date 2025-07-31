@@ -19,7 +19,12 @@ CLASS zcl_wx_approval_result DEFINITION
         !sp_no TYPE ztwx_approval-sp_no .
     METHODS cust_approval_result.
   PROTECTED SECTION.
-    DATA: hook_cache TYPE REF TO zcl_wx_cache.
+
+    DATA hook_cache TYPE REF TO zcl_wx_cache .
+
+    METHODS last_approval_time
+      RETURNING
+        VALUE(unix) TYPE int4 .
   PRIVATE SECTION.
     DATA: approvals TYPE TABLE OF ztwx_approval.
 
@@ -121,6 +126,8 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
 
     DATA: l_unix TYPE string.
 
+    CHECK unix IS NOT INITIAL.
+
     l_unix = unix && '000'.
 
     cl_pco_utility=>convert_java_timestamp_to_abap(
@@ -131,7 +138,7 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
         ev_time      = DATA(l_time)
     ).
 
-    timestamp  = l_date && l_time.
+    timestampl = timestamp = l_date && l_time.
 
   ENDMETHOD.
 
@@ -158,9 +165,11 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
       ls_approval-upd-etamp = abap_true.
       ls_approval-upd-etatu = abap_true.
 
-      unix2timestamp( EXPORTING unix       = me->result-info->sp_status
+      IF ls_approval-apamp IS INITIAL.
+        unix2timestamp( EXPORTING unix       = last_approval_time( )
                       IMPORTING timestampl = ls_approval-apamp ).
       ls_approval-upd-apamp = abap_true.
+      ENDIF.
 
       IF me->result-info IS BOUND.
         ls_approval-apsta = me->result-info->sp_status.
@@ -179,6 +188,29 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
     ENDLOOP.
 
     UPDATE ztwx_approval FROM TABLE @lt_approval INDICATORS SET STRUCTURE upd.
+
+  ENDMETHOD.
+
+
+  METHOD last_approval_time.
+
+    CHECK me->result IS NOT INITIAL.
+
+    CHECK me->result-info->sp_status = 2
+       OR me->result-info->sp_status = 3.
+
+    LOOP AT me->result-info->process_list-node_list REFERENCE INTO DATA(l_node)
+      WHERE node_type = 1
+        AND ( sp_status = 2 OR sp_status = 3 ).
+
+      LOOP AT l_node->sub_node_list REFERENCE INTO DATA(l_sub)
+        WHERE ( sp_yj = 2 OR sp_yj = 3 ).
+
+        IF unix < l_sub->sptime.
+          unix = l_sub->sptime.
+        ENDIF.
+      ENDLOOP.
+    ENDLOOP.
 
   ENDMETHOD.
 ENDCLASS.
