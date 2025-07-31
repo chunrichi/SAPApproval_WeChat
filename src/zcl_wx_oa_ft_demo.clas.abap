@@ -37,9 +37,6 @@ CLASS ZCL_WX_OA_FT_DEMO IMPLEMENTATION.
       template_id = '3WN63LowpfnXkcDgnz8kfZMZ7Uq5w78fswFS8tvb'
     ).
 
-    " 申请人userid
-    me->ft->creator_userid = me->approval->userid( ).
-
   ENDMETHOD.
 
 

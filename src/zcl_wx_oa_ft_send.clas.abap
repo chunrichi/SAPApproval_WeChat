@@ -23,6 +23,9 @@ CLASS ZCL_WX_OA_FT_SEND IMPLEMENTATION.
 
   METHOD zif_wx_oa_ft~send.
 
+    " 申请人userid
+    me->ft->creator_userid = me->approval->userid( ).
+
     " ------------------- 发起审批 ----------------------
     DATA(ls_result) = me->approval->send( me->ft ).
 
