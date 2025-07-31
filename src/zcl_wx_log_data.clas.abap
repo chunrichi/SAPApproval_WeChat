@@ -44,9 +44,10 @@ CLASS ZCL_WX_LOG_DATA IMPLEMENTATION.
 
     CHECK me->map_data IS NOT INITIAL.
 
-    lv_json = /ui2/cl_json=>serialize( data         = me->map_data
-                                       pretty_name  = 'L'
-                                       assoc_arrays = 'X' ).
+    lv_json = /ui2/cl_json=>serialize( data             = me->map_data
+                                       pretty_name      = 'L'
+                                       assoc_arrays     = 'X'
+                                       assoc_arrays_opt = 'X' ).
 
     ls_log_data-relid = 'ZZ'.
     ls_log_data-ap_no = me->ap_no.
