@@ -32,6 +32,19 @@
      <MSGNR>004</MSGNR>
      <TEXT>审批由 &amp;1 重新发起</TEXT>
     </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>用户 &amp;1 手工删除</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>审批回调出现异常 &amp;1</TEXT>
+    </T100>
+    <T100>
      <SPRSL>1</SPRSL>
      <ARBGB>ZWX01</ARBGB>
      <MSGNR>101</MSGNR>

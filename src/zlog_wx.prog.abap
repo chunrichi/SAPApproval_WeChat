@@ -50,6 +50,7 @@ DATA: gs_layout   TYPE lvc_s_layo,
       gt_fieldcat TYPE lvc_t_fcat.
 
 DATA: gt_display TYPE TABLE OF ty_display.
+DATA: go_display_alv TYPE REF TO cl_gui_alv_grid.
 
 *&----------------------------------------------------------------------
 *                     Select Screen
@@ -142,11 +143,6 @@ FORM frm_get_data .
     INTO TABLE @DATA(lt_aptyp).
   SORT lt_aptyp BY aptyp.
 
-
-  DATA(l_desc) = CAST cl_abap_elemdescr( cl_abap_elemdescr=>describe_by_name( 'ZTWX_APPROVAL-APSTA' ) ).
-  DATA(l_fixvals) = l_desc->get_ddic_fixed_values( p_langu = sy-langu ).
-  SORT l_fixvals BY low.
-
   LOOP AT gt_display ASSIGNING FIELD-SYMBOL(<ls_display>).
 
     AUTHORITY-CHECK OBJECT 'S_TCODE'
@@ -160,37 +156,11 @@ FORM frm_get_data .
       <ls_display>-aptnm = ls_aptyp-aptnm.
     ENDIF.
 
-    IF <ls_display>-statu = 'S'.
-      <ls_display>-log_o = icon_led_green.
-      <ls_display>-nodes = icon_wd_mapped_input_model_att.
-    ELSE.
-      <ls_display>-log_o = icon_led_red.
-    ENDIF.
-
-    IF <ls_display>-etatu = 'S'.
-      <ls_display>-log_i = icon_led_green.
-    ELSEIF <ls_display>-etatu = 'E'.
-      <ls_display>-log_i = icon_led_red.
-    ENDIF.
-
-
-    READ TABLE l_fixvals INTO DATA(l_fixval) WITH KEY low = <ls_display>-apsta BINARY SEARCH.
-    IF sy-subrc = 0.
-      <ls_display>-apstt = l_fixval-ddtext.
-    ENDIF.
-
-    IF <ls_display>-apsta <= 01.
-      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 2 ) ).
-    ELSEIF <ls_display>-apsta = 02.
-      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 5 ) ).
-    ELSE.
-      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 6 ) ).
-    ENDIF.
   ENDLOOP.
 
   DELETE gt_display WHERE ap_no IS INITIAL.
 
-  SORT gt_display BY stamp.
+  SORT gt_display BY ap_no.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -203,20 +173,8 @@ FORM frm_fix_data .
 
   CHECK gt_display IS NOT INITIAL.
 
-  SELECT
-    ap_no
-    FROM ztwx_log_data
-    FOR ALL ENTRIES IN @gt_display
-    WHERE ap_no = @gt_display-ap_no
-    INTO TABLE @DATA(lt_log).
-  SORT lt_log BY ap_no.
-
-  LOOP AT gt_display REFERENCE INTO DATA(l_display).
-    READ TABLE lt_log WITH KEY ap_no = l_display->ap_no TRANSPORTING NO FIELDS BINARY SEARCH.
-    IF sy-subrc = 0.
-      l_display->zfssj = icon_abap.
-    ENDIF.
-  ENDLOOP.
+  PERFORM frm_fix_log_data.
+  PERFORM frm_fix_normal.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -239,6 +197,8 @@ FORM frm_alv_display .
   ENDIF.
 
   ls_variant-report = sy-repid.
+
+  APPEND VALUE #( name = slis_ev_context_menu form = 'FRM_CONTEXT_MENU' ) TO lt_events.
 
   CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY_LVC'
     EXPORTING
@@ -393,6 +353,10 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
       " 状态查询
       PERFORM frm_load_new_state.
       p_ucomm = '&NTE'.
+    WHEN 'DELTE'.
+      " 标记删除
+      PERFORM frm_set_status2delete USING ps_selfield-tabindex.
+      p_ucomm = '&NTE'.
     WHEN '&IC1'.
       READ TABLE gt_display INTO DATA(ls_display) INDEX ps_selfield-tabindex.
       IF sy-subrc = 0.
@@ -418,6 +382,33 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
   " ps_selfield-refresh = 'X'.
   ps_selfield-col_stable = 'X' .
   ps_selfield-row_stable = 'X' .
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_context_menu
+*&---------------------------------------------------------------------*
+*& 菜单
+*&---------------------------------------------------------------------*
+FORM frm_context_menu USING e_object TYPE REF TO cl_ctmenu.
+
+  e_object->add_separator( ).
+  e_object->add_function(
+    fcode = `DELTE`
+    text  = '手工删除'(t01)
+  ).
+
+  IF go_display_alv IS NOT BOUND.
+    CALL FUNCTION 'GET_GLOBALS_FROM_SLVC_FULLSCR'
+      IMPORTING
+        e_grid = go_display_alv.
+  ENDIF.
+
+  go_display_alv->get_current_cell( IMPORTING es_row_id = DATA(ls_row_id) ).
+
+  READ TABLE gt_display REFERENCE INTO DATA(l_display) INDEX ls_row_id-index.
+  IF l_display->apsta = 91.
+    e_object->disable_functions( VALUE #( ( 'DELTE' ) ) ).
+  ENDIF.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form frm_display_events
@@ -509,7 +500,7 @@ ENDFORM.
 *&---------------------------------------------------------------------*
 *&  节点
 *&---------------------------------------------------------------------*
-FORM frm_display_nodes USING p_sp_no TYPE ty_display-sp_no.
+FORM frm_display_nodes USING p_sp_no TYPE ztwx_approval-sp_no.
   DATA: lv_lines TYPE i,
         lt_nodes TYPE TABLE OF zswx_node_info,
         lt_nodet TYPE TABLE OF zswx_node_infot.
@@ -698,6 +689,33 @@ FORM frm_resend_data USING p_tabindex.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
+*& Form frm_set_status2delete
+*&---------------------------------------------------------------------*
+*& 状态更改为删除
+*&---------------------------------------------------------------------*
+FORM frm_set_status2delete USING p_tabindex.
+  DATA: lo_log_event TYPE REF TO zcl_wx_log_event.
+  DATA: lv_changed_at TYPE ztwx_approval-changed_at.
+
+  READ TABLE gt_display INTO DATA(ls_display) INDEX p_tabindex.
+
+  lo_log_event = NEW #( ls_display-ap_no ).
+
+  IF 1 = 2. MESSAGE e005(zwx01) WITH sy-uname. ENDIF.
+  lo_log_event->log( evnid = 'e005' parms = sy-uname ).
+
+  GET TIME STAMP FIELD lv_changed_at.
+
+  UPDATE ztwx_approval
+    CONNECTION r/3*wechat
+    SET apsta = 91
+      changer = sy-uname
+   changed_at = lv_changed_at
+    WHERE ap_no = ls_display-ap_no.
+
+  COMMIT CONNECTION r/3*wechat.
+ENDFORM.
+*&---------------------------------------------------------------------*
 *&      Form  frm_popup_message
 *&---------------------------------------------------------------------*
 *      弹出消息框
@@ -718,4 +736,75 @@ FORM frm_popup_message USING p_titel TYPE char20
       start_row      = 13
     IMPORTING
       answer         = c_answer.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form FRM_FIX_LOG_DATA
+*&---------------------------------------------------------------------*
+*&  补充数据
+*&---------------------------------------------------------------------*
+FORM frm_fix_log_data .
+
+  SELECT
+    ap_no
+    FROM ztwx_log_data
+    FOR ALL ENTRIES IN @gt_display
+    WHERE ap_no = @gt_display-ap_no
+    INTO TABLE @DATA(lt_log).
+  SORT lt_log BY ap_no.
+
+  LOOP AT gt_display REFERENCE INTO DATA(l_display).
+    READ TABLE lt_log WITH KEY ap_no = l_display->ap_no TRANSPORTING NO FIELDS BINARY SEARCH.
+    IF sy-subrc = 0.
+      l_display->zfssj = icon_abap.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_fix_normal
+*&---------------------------------------------------------------------*
+*&  常规数据 【 其他程序中可能用到的 】
+*&---------------------------------------------------------------------*
+FORM frm_fix_normal .
+
+  DATA(l_desc) = CAST cl_abap_elemdescr( cl_abap_elemdescr=>describe_by_name( 'ZTWX_APPROVAL-APSTA' ) ).
+  DATA(l_fixvals) = l_desc->get_ddic_fixed_values( p_langu = sy-langu ).
+  SORT l_fixvals BY low.
+
+  LOOP AT gt_display ASSIGNING FIELD-SYMBOL(<ls_display>).
+
+    IF <ls_display>-statu = 'S'.
+      <ls_display>-log_o = icon_led_green.
+      <ls_display>-nodes = icon_wd_mapped_input_model_att.
+    ELSE.
+      <ls_display>-log_o = icon_led_red.
+    ENDIF.
+
+    IF <ls_display>-etatu = 'S'.
+      <ls_display>-log_i = icon_led_green.
+    ELSEIF <ls_display>-etatu = 'E'.
+      <ls_display>-log_i = icon_led_red.
+    ENDIF.
+
+
+    READ TABLE l_fixvals INTO DATA(l_fixval) WITH KEY low = <ls_display>-apsta BINARY SEARCH.
+    IF sy-subrc = 0.
+      <ls_display>-apstt = l_fixval-ddtext.
+    ENDIF.
+
+    IF <ls_display>-apsta = '00' AND <ls_display>-statu = 'E'.
+      " 发起失败
+      CLEAR <ls_display>-apstt.
+    ENDIF.
+
+    IF <ls_display>-apsta <= 01.
+      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 2 ) ).
+    ELSEIF <ls_display>-apsta = 02.
+      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 5 ) ).
+    ELSEIF <ls_display>-apsta = 03.
+      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 6 ) ).
+    ELSE.
+      <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 3 color-inv = 1 ) ).
+    ENDIF.
+  ENDLOOP.
 ENDFORM.
