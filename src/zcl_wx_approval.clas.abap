@@ -111,7 +111,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     DATA: ls_user_info TYPE ztwx_user_info.
     IF l_ecode = 200.
       ls_user_info-uname = uname.
-      ls_user_info-phone = ls_user_info-phone.
+      ls_user_info-phone = ls_sap_info-phone.
       ls_user_info-userid = userid.
 
       IF ls_info_cache-userid IS NOT INITIAL.
