@@ -7,7 +7,7 @@ CLASS zcl_wx_approval DEFINITION
   PUBLIC SECTION.
 
     DATA approval TYPE ztwx_approval .
-    DATA log_data TYPE REF TO zcl_wx_log_data.
+    DATA log_data TYPE REF TO zcl_wx_log_data .
 
     METHODS constructor .
     METHODS set_aptyp
@@ -69,6 +69,10 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
 
   METHOD userid.
 
+    IF uname IS INITIAL.
+      uname = sy-uname.
+    ENDIF.
+
     " 当前用户电话号码取值
     SELECT SINGLE
       us~bname AS uname,
@@ -96,7 +100,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
 
     IF ls_sap_info-phone IS INITIAL.
       " 未找到 & 的手机号
-      RAISE EXCEPTION TYPE zcx_wx_error MESSAGE e001(zwechat) WITH uname.
+      " RAISE EXCEPTION TYPE zcx_wx_error MESSAGE e001(zwechat) WITH uname.
       " 报错在 send 中处理并记录，不再中断
     ENDIF.
 
@@ -130,14 +134,14 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
   METHOD send.
 
     IF me->is_resend( ) = ' '.
-    me->approval-ap_no = lcl_snro=>next( ).
+      me->approval-ap_no = lcl_snro=>next( ).
       me->approval-apusr = sy-uname.
     ENDIF.
     me->log_event->ap_no = me->approval-ap_no.
 
     me->log_data->ap_no = me->approval-ap_no.
     IF me->is_resend( ) = ' '.
-    me->log_data->log( ).
+      me->log_data->log( ).
     ENDIF.
 
     GET TIME STAMP FIELD me->approval-stamp.
@@ -162,8 +166,8 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       me->approval-statu = 'S'.
 
       IF me->is_resend( ) = ' '.
-      IF 1 = 2. MESSAGE s002(zwx01). ENDIF.
-      me->log_event->log( evnid = 's002' ).
+        IF 1 = 2. MESSAGE s002(zwx01). ENDIF.
+        me->log_event->log( evnid = 's002' ).
       ELSE.
         IF 1 = 2. MESSAGE s004(zwx01) WITH sy-uname. ENDIF.
         me->log_event->log( evnid = 's004' parms = sy-uname ).

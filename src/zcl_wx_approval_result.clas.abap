@@ -89,6 +89,11 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
       ENDTRY.
 
       TRY.
+          lr_if->log_event = NEW #( me->approvals[ 1 ]-ap_no ).
+        CATCH cx_root.
+      ENDTRY.
+
+      TRY.
 
           lr_if->process_result( sp_no = me->approvals[ 1 ]-sp_no
                                  apsta = me->approvals[ 1 ]-apsta ).

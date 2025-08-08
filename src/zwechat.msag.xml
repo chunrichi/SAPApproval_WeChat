@@ -38,6 +38,24 @@
      <MSGNR>004</MSGNR>
      <TEXT>http 请求异常 &amp;</TEXT>
     </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>005</MSGNR>
+     <TEXT>企微审批中，不可修改</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>006</MSGNR>
+     <TEXT>企微已驳回，请重新创建新单据后再提交审批</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWECHAT</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>企业审批通过，不可修改</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>

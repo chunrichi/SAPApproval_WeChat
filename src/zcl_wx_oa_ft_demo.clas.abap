@@ -42,6 +42,7 @@ CLASS ZCL_WX_OA_FT_DEMO IMPLEMENTATION.
 
   METHOD map.
     instance = me.
+    /zwx/log.
 
     me->approval->set_docum( text01 ).
     " me->approval->set_mnote(  ).

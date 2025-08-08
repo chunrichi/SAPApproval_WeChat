@@ -13,11 +13,12 @@ CLASS zcl_wechat_approval DEFINITION
       tt_filters    TYPE STANDARD TABLE OF ty_filter WITH DEFAULT KEY .
     TYPES:
       tt_sp_no_list TYPE STANDARD TABLE OF string WITH DEFAULT KEY .
-    TYPES: BEGIN OF ty_instance_result,
-             errcode TYPE i,
-             errmsg  TYPE string,
-             sp_no   TYPE string,
-           END OF ty_instance_result.
+    TYPES:
+      BEGIN OF ty_instance_result,
+        errcode TYPE i,
+        errmsg  TYPE string,
+        sp_no   TYPE string,
+      END OF ty_instance_result .
 
     DATA g_error_message TYPE string .
 
@@ -27,8 +28,9 @@ CLASS zcl_wechat_approval DEFINITION
         !corpsecret TYPE any .
     METHODS send
       IMPORTING
-                !data         TYPE REF TO zcl_wx_oa_ft
-      RETURNING VALUE(result) TYPE ty_instance_result.
+        !data         TYPE REF TO zcl_wx_oa_ft
+      RETURNING
+        VALUE(result) TYPE ty_instance_result .
     METHODS read
       IMPORTING
         !sp_no  TYPE string
@@ -48,7 +50,7 @@ CLASS zcl_wechat_approval DEFINITION
         VALUE(sp_no_list) TYPE tt_sp_no_list .
     METHODS userid
       IMPORTING
-        !uname        TYPE syuname DEFAULT sy-uname
+        VALUE(uname)  TYPE syuname DEFAULT sy-uname
       RETURNING
         VALUE(userid) TYPE string .
   PROTECTED SECTION.
