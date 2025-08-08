@@ -39,16 +39,14 @@ CLASS ZCL_WX_LOG_EVENT IMPLEMENTATION.
     IF ap_no IS INITIAL.
       lv_evnnm = 0.
     ENDIF.
-    lv_evnnm = lv_evnnm + 1.
 
-    IF me->evnnm > lv_evnnm.
-      lv_evnnm = me->evnnm.
-    ELSE.
+    IF me->evnnm <= lv_evnnm.
       me->evnnm = lv_evnnm.
     ENDIF.
+    me->evnnm = me->evnnm + 1.
 
     me->elog-ap_no = me->ap_no.
-    me->elog-evnnm = lv_evnnm.
+    me->elog-evnnm = me->evnnm.
     me->elog-evnid = to_upper( evnid ).
     me->elog-parms = parms.
 
