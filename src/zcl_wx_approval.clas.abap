@@ -22,18 +22,22 @@ CLASS zcl_wx_approval DEFINITION
     METHODS set_mnote
       IMPORTING
         !mnote TYPE ztwx_approval-mnote .
+    METHODS is_resend
+      IMPORTING
+        !ap_no        TYPE ztwx_approval-ap_no OPTIONAL
+      RETURNING
+        VALUE(r_flag) TYPE abap_bool .
 
     METHODS send
         REDEFINITION .
     METHODS userid
         REDEFINITION .
-
   PROTECTED SECTION.
     DATA: hook_cache TYPE REF TO zcl_wx_cache.
     DATA: log_event TYPE REF TO zcl_wx_log_event.
 
   PRIVATE SECTION.
-
+    DATA: is_resend_call TYPE abap_bool.
 ENDCLASS.
 
 
@@ -118,22 +122,26 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       MODIFY ztwx_user_info FROM ls_user_info.
     ENDIF.
 
+    me->set_apusr( uname ).
 
   ENDMETHOD.
 
 
   METHOD send.
 
+    IF me->is_resend( ) = ' '.
     me->approval-ap_no = lcl_snro=>next( ).
+      me->approval-apusr = sy-uname.
+    ENDIF.
     me->log_event->ap_no = me->approval-ap_no.
 
     me->log_data->ap_no = me->approval-ap_no.
+    IF me->is_resend( ) = ' '.
     me->log_data->log( ).
+    ENDIF.
 
     GET TIME STAMP FIELD me->approval-stamp.
-
-    me->approval-apsta = 'I'.
-    me->approval-apusr = sy-uname.
+    me->approval-apsta = '00'. " 已发起
 
     me->approval-tp_id = data->template_id.
     me->approval-tcode = sy-tcode.
@@ -153,8 +161,13 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       me->approval-sp_no = result-sp_no.
       me->approval-statu = 'S'.
 
+      IF me->is_resend( ) = ' '.
       IF 1 = 2. MESSAGE s002(zwx01). ENDIF.
       me->log_event->log( evnid = 's002' ).
+      ELSE.
+        IF 1 = 2. MESSAGE s004(zwx01) WITH sy-uname. ENDIF.
+        me->log_event->log( evnid = 's004' parms = sy-uname ).
+      ENDIF.
     ELSE.
       me->approval-statu = 'E'.
 
@@ -189,5 +202,21 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
   METHOD set_aptyp.
 
     me->approval-aptyp = aptyp.
+  ENDMETHOD.
+
+
+  METHOD is_resend.
+
+    IF ap_no IS SUPPLIED AND ap_no IS NOT INITIAL.
+      SELECT SINGLE * FROM ztwx_approval
+        WHERE ap_no = @ap_no
+        INTO @me->approval.
+      me->is_resend_call = 'X'.
+    ENDIF.
+
+    IF me->approval-ap_no IS NOT INITIAL AND me->is_resend_call = 'X'.
+      r_flag = 'X'.
+    ENDIF.
+
   ENDMETHOD.
 ENDCLASS.

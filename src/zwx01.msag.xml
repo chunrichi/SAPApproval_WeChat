@@ -29,6 +29,11 @@
     <T100>
      <SPRSL>1</SPRSL>
      <ARBGB>ZWX01</ARBGB>
+     <MSGNR>004</MSGNR>
+     <TEXT>审批由 &amp;1 重新发起</TEXT>
+    </T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
      <MSGNR>101</MSGNR>
      <TEXT>请选择一行数据</TEXT>
     </T100>

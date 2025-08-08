@@ -398,9 +398,18 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
       IF sy-subrc = 0.
 
         IF ps_selfield-fieldname = 'ZFSSJ'.
+          " 显示发送数据
           PERFORM frm_show_send_data USING ls_display-ap_no.
         ELSEIF ps_selfield-fieldname = 'NODES'.
+          " 显示流程信息
+          CHECK ls_display-statu = 'S'.
           PERFORM frm_display_nodes USING ls_display-sp_no.
+        ELSEIF ps_selfield-fieldname = 'LOG_O'.
+          IF ls_display-log_o = icon_led_red.
+            " 重新发起
+            PERFORM frm_resend_data USING ps_selfield-tabindex.
+            p_ucomm = '&NTE'.
+          ENDIF.
         ENDIF.
       ENDIF.
     WHEN OTHERS.
@@ -658,4 +667,55 @@ FORM frm_show_send_data  USING p_ap_no TYPE ty_display-ap_no.
     cl_abap_browser=>show_html( html_string = lv_convert ).
   ENDIF.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_resend_data
+*&---------------------------------------------------------------------*
+*&  重新发起数据
+*&---------------------------------------------------------------------*
+FORM frm_resend_data USING p_tabindex.
+
+  " 临时以当前命名来处理
+  DATA: lv_class_name TYPE string VALUE 'ZCL_WX_OA_FT_'.
+  DATA: l_object TYPE REF TO zif_wx_oa_ft.
+  DATA: l_answer TYPE char1.
+
+  READ TABLE gt_display INTO DATA(ls_display) INDEX p_tabindex.
+
+  IF ls_display-statu <> 'E'.
+    RETURN.
+  ENDIF.
+
+  PERFORM frm_popup_message USING 'Confirm' '是否确认重新发送数据' CHANGING l_answer.
+  CHECK l_answer = 'J'.
+
+  lv_class_name = lv_class_name && ls_display-aptyp.
+
+  CREATE OBJECT l_object TYPE (lv_class_name).
+
+  l_object->resend( ap_no = ls_display-ap_no
+                    uname = ls_display-apusr ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  frm_popup_message
+*&---------------------------------------------------------------------*
+*      弹出消息框
+*----------------------------------------------------------------------*
+FORM frm_popup_message USING p_titel TYPE char20
+                             p_text
+                   CHANGING c_answer TYPE c.
+  DATA: lv_text TYPE char40.
+  lv_text = p_text.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM_STEP'
+    EXPORTING
+      titel          = p_titel
+      textline1      = lv_text
+      defaultoption  = 'N'
+      cancel_display = ' '
+      start_column   = 16
+      start_row      = 13
+    IMPORTING
+      answer         = c_answer.
 ENDFORM.
