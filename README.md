@@ -13,7 +13,7 @@ This framework simplifies the development of approval functions in WeChatWork by
 - **Scheduled Jobs**: Automatic approval result checking via scheduled jobs
 
 <div align="center">
-  <img src="docs/images/zlog_wx-event-log.png" alt="WeChat Approval Event Log" width="600" style="border: 1px solid #ddd; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); margin: 20px 0;">
+  <img src="./docs/images/zlog_wx-event-log.png" alt="WeChat Approval Event Log" width="600" style="border: 1px solid #ddd; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); margin: 20px 0;">
   
   **Figure 1**: WeChat approval event log interface
 </div>
