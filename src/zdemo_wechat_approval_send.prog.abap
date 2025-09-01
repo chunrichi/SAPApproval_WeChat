@@ -14,7 +14,7 @@ DATA(l_approval) = NEW zcl_wechat_approval(
 " 审批标题: 发文审批
 
 " ------------------- 基础赋值 ----------------------
-DATA(l_fc) = NEW zcl_wx_oa_ft( ).
+DATA(l_fc) = NEW zcl_wx_oa_ft( '' ).
 " 申请人userid
 l_fc->creator_userid        = l_approval->userid( ).
 

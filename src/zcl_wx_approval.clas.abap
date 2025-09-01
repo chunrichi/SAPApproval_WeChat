@@ -86,7 +86,8 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     " 电话号码和缓存校验 => 一致则直接返回 userid
     SELECT SINGLE
       phone,
-      userid
+      userid,
+      created_on
       FROM ztwx_user_info
       WHERE uname = @uname
       INTO @DATA(ls_info_cache).
@@ -102,15 +103,16 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       " 未找到 & 的手机号
       " RAISE EXCEPTION TYPE zcx_wx_error MESSAGE e001(zwechat) WITH uname.
       " 报错在 send 中处理并记录，不再中断
-    ENDIF.
+    ELSE.
 
-    " 取新值
-    DATA(l_ecode) = me->http->userid(
-      EXPORTING
-        phone  = |{ ls_sap_info-phone }|
-      IMPORTING
-        userid = userid
-    ).
+      " 取新值
+      DATA(l_ecode) = me->http->userid(
+        EXPORTING
+          phone  = |{ ls_sap_info-phone }|
+        IMPORTING
+          userid = userid
+      ).
+    ENDIF.
 
     DATA: ls_user_info TYPE ztwx_user_info.
     IF l_ecode = 200.
@@ -118,7 +120,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       ls_user_info-phone = ls_sap_info-phone.
       ls_user_info-userid = userid.
 
-      IF ls_info_cache-userid IS NOT INITIAL.
+      IF ls_info_cache-created_on IS INITIAL.
         GET TIME STAMP FIELD ls_user_info-created_on.
       ENDIF.
       GET TIME STAMP FIELD ls_user_info-changed_on.
@@ -176,7 +178,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       me->approval-statu = 'E'.
 
       IF 1 = 2. MESSAGE e003(zwx01) WITH result-errmsg. ENDIF.
-      me->log_event->log( evnid = 'e003' parms = result-errmsg ).
+      me->log_event->log( evnid = 'e003' parms = |{ result-errcode }-{ result-errmsg }| ).
     ENDIF.
 
     MODIFY ztwx_approval CONNECTION r/3*wechat FROM me->approval.
