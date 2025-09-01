@@ -1,6 +1,5 @@
 CLASS zcl_wechat_http DEFINITION
   PUBLIC
-  FINAL
   CREATE PUBLIC .
 
   PUBLIC SECTION.
@@ -16,15 +15,14 @@ CLASS zcl_wechat_http DEFINITION
     DATA g_pretty_name TYPE /ui2/cl_json=>pretty_name_mode VALUE `` ##NO_TEXT.
     DATA g_read_mode TYPE /ui2/cl_json=>pretty_name_mode VALUE `` ##NO_TEXT.
     DATA g_error_message TYPE string .
-
     DATA:
       BEGIN OF token_cache,
         timestamp TYPE timestamp,
         token     TYPE string,
       END OF token_cache .
 
-    EVENTS hook_cache_token_set.
-    EVENTS hook_cache_token_get.
+    EVENTS hook_cache_token_set .
+    EVENTS hook_cache_token_get .
 
     METHODS constructor
       IMPORTING
@@ -56,11 +54,17 @@ CLASS zcl_wechat_http DEFINITION
         !userid      TYPE string
       RETURNING
         VALUE(ecode) TYPE i .
+    METHODS file
+      IMPORTING
+        !filename           TYPE string
+        VALUE(params)       TYPE tt_kv OPTIONAL
+        VALUE(content_type) TYPE string DEFAULT `file`
+        !raw                TYPE xstring
+      EXPORTING
+        !result             TYPE data
+      RETURNING
+        VALUE(ecode)        TYPE i .
   PROTECTED SECTION.
-  PRIVATE SECTION.
-
-    DATA corpid TYPE string .
-    DATA corpsecret TYPE string .     " 企业 ID " 应用的凭证密钥
 
     METHODS request
       IMPORTING
@@ -74,6 +78,10 @@ CLASS zcl_wechat_http DEFINITION
       RETURNING
         VALUE(ecode) TYPE i .
     METHODS access_token .
+  PRIVATE SECTION.
+
+    DATA corpid TYPE string .
+    DATA corpsecret TYPE string .         " 企业 ID " 应用的凭证密钥
 ENDCLASS.
 
 
@@ -186,6 +194,7 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
   METHOD request.
 
     DATA: l_req_json TYPE string,
+          l_req_raw  TYPE xstring,
           l_res_json TYPE string.
     DATA: lv_url         TYPE string,
           lr_http_client TYPE REF TO if_http_client.
@@ -197,6 +206,8 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
         WHEN 'l' OR 'u' OR 'v' OR 'h' OR 'r'. " data ref/flat struct/deep struct/table/classObject
           l_req_json = /ui2/cl_json=>serialize( data        = data
                                                 pretty_name = me->g_pretty_name ).
+        WHEN 'y'. " raw
+          l_req_raw = data.
         WHEN OTHERS.
           l_req_json = data.
       ENDCASE.
@@ -238,7 +249,29 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
     " 设置http请求方法
     lr_http_client->request->set_method( method ).
 
-    lr_http_client->request->set_header_field( name = `Content-Type` value = `application/json` ).
+    IF l_req_json IS NOT INITIAL.
+      lr_http_client->request->set_header_field( name = `Content-Type` value = `application/json` ).
+      lr_http_client->request->set_cdata( data = l_req_json ).
+    ENDIF.
+
+    IF l_req_raw IS NOT INITIAL.
+      lr_http_client->request->set_content_type( content_type = `multipart/form-data` ).
+
+      lr_http_client->request->set_formfield_encoding( formfield_encoding = cl_http_request=>if_http_entity~co_encoding_raw ).
+      DATA(lr_part) = lr_http_client->request->if_http_entity~add_multipart( ).
+
+      lr_part->set_header_field( name  = `Content-Disposition`
+                                 value = |form-data; name="{ `media`
+                                 }"; filename="{ VALUE #( params[ key = 'filename' ]-value OPTIONAL )
+                                 }"; filelength={ xstrlen( l_req_raw ) }| ).
+
+      lr_part->set_content_type( `application/octet-stream` ).
+
+      lr_part->set_data( data   = l_req_raw
+                         offset = 0
+                         length = xstrlen( l_req_raw ) ).
+    ENDIF.
+
     lr_http_client->request->set_header_field( name = `Accept` value = `application/json` ).
 
     IF headers IS SUPPLIED.
@@ -247,10 +280,6 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
         lr_http_client->request->set_header_field( name = ls_headers-key value = ls_headers-value ).
       ENDLOOP.
 
-    ENDIF.
-
-    IF l_req_json IS NOT INITIAL.
-      lr_http_client->request->set_cdata( data = l_req_json ).
     ENDIF.
 
     CALL METHOD lr_http_client->send
@@ -351,5 +380,38 @@ CLASS ZCL_WECHAT_HTTP IMPLEMENTATION.
 
     CLEAR: me->g_pretty_name,
            me->g_read_mode.
+  ENDMETHOD.
+
+
+  METHOD file.
+
+    " 素材上传得到 media_id ，该 media_id 仅三天内有效
+    " media_id 在同一企业内应用之间可以共享
+
+    IF NOT ( content_type = `image`
+      OR content_type = `voice`
+      OR content_type = `video`
+      OR content_type = `file` ).
+      content_type = `file`.
+    ENDIF.
+
+    me->access_token( ).
+
+    READ TABLE params TRANSPORTING NO FIELDS WITH KEY key = `access_token`.
+    IF sy-subrc <> 0.
+      APPEND VALUE #( key = `access_token` value = me->token_cache-token ) TO params.
+      APPEND VALUE #( key = `type` value = content_type ) TO params.
+      APPEND VALUE #( key = `filename` value = filename ) TO params.
+    ENDIF.
+
+    ecode = me->request(
+      EXPORTING
+        method = 'POST'
+        url    = `https://qyapi.weixin.qq.com/cgi-bin/media/upload`
+        params = params
+        data   = raw
+      IMPORTING
+        result = result
+    ).
   ENDMETHOD.
 ENDCLASS.
