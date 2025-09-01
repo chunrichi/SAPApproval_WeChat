@@ -141,6 +141,8 @@ lo_processor->process_pending_approvals( ).
    - Configure logging level in `zcl_wx_log_data`
 
 3. **Macro Setup** (required for logging):
+   - Open TCode `SM30` to maintain table `TRMAC`
+   - Insert new line like:
    ```
    /ZWX/LOG	001	INCLUDE ZWX_CMACRO_LOG.
    ```
