@@ -156,6 +156,8 @@ FORM frm_get_data .
 
     l_result->load_approval_info( sp_no = ls_sp_no-sp_no ).
 
+    l_result->upd_approval( sp_no = ls_sp_no-sp_no ).
+
     l_result->cust_approval_result( ).
   ENDLOOP.
 

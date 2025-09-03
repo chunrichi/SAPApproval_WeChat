@@ -61,6 +61,7 @@ SELECTION-SCREEN BEGIN OF BLOCK blck1 WITH FRAME.
                   s_sp_no FOR ztwx_approval-sp_no,
                   s_docum FOR ztwx_approval-docum,
                   s_stamp FOR ztwx_approval-stamp MATCHCODE OBJECT cic_timestamp,
+                  s_statu FOR ztwx_approval-statu,
                   s_apusr FOR ztwx_approval-apusr MATCHCODE OBJECT user_comp,
                   s_apsta FOR ztwx_approval-apsta.
 SELECTION-SCREEN END OF BLOCK blck1.
@@ -127,6 +128,7 @@ FORM frm_get_data .
       AND docum IN @s_sp_no
       AND docum IN @s_docum
       AND stamp IN @s_stamp
+      AND statu IN @s_statu
       AND apusr IN @s_apusr
       AND apsta IN @s_apsta.
 
@@ -345,7 +347,7 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
       ps_selfield-refresh = 'X'.
     WHEN 'EVENLOG'.
       " 操作记录
-      PERFORM frm_display_events.
+      PERFORM frm_display_events USING ps_selfield.
     WHEN 'NODES'.
       " 流程信息
       PERFORM frm_display_nodes USING ''.
@@ -357,6 +359,8 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
       " 标记删除
       PERFORM frm_set_status2delete USING ps_selfield-tabindex.
       p_ucomm = '&NTE'.
+    WHEN 'DISPDT'.
+      PERFORM frm_load_display_detial USING ps_selfield-tabindex.
     WHEN '&IC1'.
       READ TABLE gt_display INTO DATA(ls_display) INDEX ps_selfield-tabindex.
       IF sy-subrc = 0.
@@ -396,6 +400,11 @@ FORM frm_context_menu USING e_object TYPE REF TO cl_ctmenu.
     text  = '手工删除'(t01)
   ).
 
+  e_object->add_function(
+    fcode = `DISPDT`
+    text  = '拉取展示详情'(t02)
+  ).
+
   IF go_display_alv IS NOT BOUND.
     CALL FUNCTION 'GET_GLOBALS_FROM_SLVC_FULLSCR'
       IMPORTING
@@ -415,7 +424,7 @@ ENDFORM.
 *&---------------------------------------------------------------------*
 *& 展示操作详情
 *&---------------------------------------------------------------------*
-FORM frm_display_events .
+FORM frm_display_events USING ps_selfield TYPE slis_selfield.
   DATA: lv_lines TYPE i,
         lt_event TYPE TABLE OF zswx_log_event.
 
@@ -423,7 +432,10 @@ FORM frm_display_events .
     ADD 1 TO lv_lines.
     CHECK lv_lines < 2.
   ENDLOOP.
-  IF sy-subrc <> 0 OR lv_lines > 1.
+  IF sy-subrc <> 0 AND ps_selfield-tabindex > 0.
+    gt_display[ ps_selfield-tabindex ]-box = 'X'.
+    ps_selfield-refresh = 'X'.
+  ELSEIF sy-subrc <> 0 OR lv_lines > 1.
     " 请选择一行数据
     MESSAGE e101(zwx01).
   ENDIF.
@@ -518,6 +530,10 @@ FORM frm_display_nodes USING p_sp_no TYPE ztwx_approval-sp_no.
     DATA(ls_display) = gt_display[ box = 'X' ].
   ELSE.
     ls_display-sp_no = p_sp_no.
+  ENDIF.
+
+  IF ls_display-sp_no IS INITIAL.
+    RETURN.
   ENDIF.
 
   DATA(l_result) = NEW zcl_wx_approval_result( ).
@@ -807,4 +823,39 @@ FORM frm_fix_normal .
       <ls_display>-scolo = VALUE #( ( fname = 'APSTT' color-col = 3 color-inv = 1 ) ).
     ENDIF.
   ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_load_display_detial
+*&---------------------------------------------------------------------*
+*&  拉取并展示详情
+*&---------------------------------------------------------------------*
+FORM frm_load_display_detial USING p_tabindex.
+  DATA: lv_result_json TYPE string.
+
+  READ TABLE gt_display INTO DATA(ls_display) INDEX p_tabindex.
+
+  CHECK ls_display-sp_no IS NOT INITIAL.
+
+  DATA(lo_result) = NEW zcl_wx_approval_result( ).
+
+  TRY.
+      lo_result->read( EXPORTING sp_no  = |{ ls_display-sp_no }|
+                       IMPORTING result = lv_result_json ).
+    CATCH cx_root INTO DATA(lo_load_error).
+      MESSAGE lo_load_error->get_text( ) TYPE 'S' DISPLAY LIKE 'E'.
+      RETURN.
+  ENDTRY.
+
+  TRY.
+      CALL TRANSFORMATION sjson2html SOURCE XML lv_result_json
+        RESULT XML DATA(lv_html).
+    CATCH cx_xslt_runtime_error INTO DATA(lo_err).
+      DATA(lv_err_text) = lo_err->get_text( ).
+      MESSAGE lv_err_text TYPE 'S' DISPLAY LIKE 'E'.
+      RETURN .
+  ENDTRY.
+
+  DATA(lv_convert) = cl_abap_codepage=>convert_from( lv_html ).
+  cl_abap_browser=>show_html( html_string = lv_convert ).
+
 ENDFORM.

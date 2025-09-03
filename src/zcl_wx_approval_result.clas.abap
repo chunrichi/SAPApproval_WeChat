@@ -24,6 +24,10 @@ CLASS zcl_wx_approval_result DEFINITION
       EXPORTING
         !timestamp  TYPE timestamp
         !timestampl TYPE timestampl .
+
+    METHODS upd_approval
+      IMPORTING
+        !sp_no TYPE ztwx_approval-sp_no .
   PROTECTED SECTION.
 
     DATA hook_cache TYPE REF TO zcl_wx_cache .
@@ -34,14 +38,11 @@ CLASS zcl_wx_approval_result DEFINITION
   PRIVATE SECTION.
     DATA: approvals TYPE TABLE OF ztwx_approval.
 
-    METHODS upd_approval
-      IMPORTING
-        !sp_no TYPE ztwx_approval-sp_no .
 ENDCLASS.
 
 
 
-CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
+CLASS zcl_wx_approval_result IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -122,7 +123,7 @@ CLASS ZCL_WX_APPROVAL_RESULT IMPLEMENTATION.
       me->result-info->sp_no = sp_no.
     ENDIF.
 
-    upd_approval( sp_no ).
+    " upd_approval( sp_no ).
 
   ENDMETHOD.
 
