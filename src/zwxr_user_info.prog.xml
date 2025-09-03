@@ -2468,18 +2468,30 @@
     <item>
      <ID>I</ID>
      <KEY>007</KEY>
-     <ENTRY>企微账户id</ENTRY>
+     <ENTRY>维护邮箱</ENTRY>
      <LENGTH>16</LENGTH>
     </item>
     <item>
      <ID>I</ID>
      <KEY>008</KEY>
-     <ENTRY>首次拉取时间</ENTRY>
+     <ENTRY>关联邮箱</ENTRY>
      <LENGTH>16</LENGTH>
     </item>
     <item>
      <ID>I</ID>
      <KEY>009</KEY>
+     <ENTRY>企微账户id</ENTRY>
+     <LENGTH>16</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>010</KEY>
+     <ENTRY>首次拉取时间</ENTRY>
+     <LENGTH>16</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>011</KEY>
      <ENTRY>上次拉取时间</ENTRY>
      <LENGTH>16</LENGTH>
     </item>

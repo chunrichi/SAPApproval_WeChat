@@ -16,6 +16,8 @@ TYPES: BEGIN OF ty_display,
          name_text  TYPE user_addrp-name_text,      " 姓名
          tel_number TYPE adcp-tel_number,           " 维护手机号
          phone      TYPE ztwx_user_info-phone,      " 关联手机号
+         smtp_addr  TYPE adr6-smtp_addr,            " 维护邮箱
+         " email      TYPE string,                    " 关联邮箱
          userid     TYPE ztwx_user_info-userid,     " 企微账户id
          created_on TYPE ztwx_user_info-created_on, " 首次拉取时间
          changed_on TYPE ztwx_user_info-changed_on, " 上次拉取时间
@@ -97,6 +99,8 @@ FORM frm_get_data .
       INTO CORRESPONDING FIELDS OF TABLE @gt_display.
   ENDIF.
 
+  SORT gt_display BY bname.
+
   IF gt_display IS NOT INITIAL.
     SELECT
       us~bname AS uname,
@@ -106,15 +110,31 @@ FORM frm_get_data .
                           AND cp~persnumber = us~persnumber
       FOR ALL ENTRIES IN @gt_display
       WHERE us~bname = @gt_display-bname
-      INTO TABLE @DATA(lt_sap_info).
-    SORT lt_sap_info BY uname.
+      INTO TABLE @DATA(lt_sap_tel).
+    SORT lt_sap_tel BY uname.
+
+    SELECT
+      us~bname AS uname,
+      cp~smtp_addr AS email
+      FROM usr21 AS us
+      LEFT JOIN adr6 AS cp ON cp~addrnumber = us~addrnumber
+                          AND cp~persnumber = us~persnumber
+      FOR ALL ENTRIES IN @gt_display
+      WHERE us~bname = @gt_display-bname
+      INTO TABLE @DATA(lt_sap_mal).
+    SORT lt_sap_mal BY uname.
   ENDIF.
 
   LOOP AT gt_display REFERENCE INTO DATA(l_display).
 
-    READ TABLE lt_sap_info INTO DATA(ls_sap) WITH KEY uname = l_display->bname BINARY SEARCH.
+    READ TABLE lt_sap_tel INTO DATA(ls_sap_tel) WITH KEY uname = l_display->bname BINARY SEARCH.
     IF sy-subrc = 0.
-      l_display->tel_number = ls_sap-phone.
+      l_display->tel_number = ls_sap_tel-phone.
+    ENDIF.
+
+    READ TABLE lt_sap_mal INTO DATA(ls_sap_mal) WITH KEY uname = l_display->bname BINARY SEARCH.
+    IF sy-subrc = 0.
+      l_display->smtp_addr = ls_sap_mal-email.
     ENDIF.
 
     IF l_display->tel_number <> l_display->phone.
@@ -126,6 +146,10 @@ FORM frm_get_data .
       l_display->icon = icon_led_red.
       l_display->message = '请在 su01 中维护手机号信息'(t02).
       CONTINUE.
+    ENDIF.
+
+    IF l_display->icon IS INITIAL.
+      l_display->icon = icon_led_green.
     ENDIF.
   ENDLOOP.
 
@@ -188,9 +212,11 @@ FORM frm_set_fieldcat .
   PERFORM frm_set_fcat USING 'NAME_TEXT'  'USER_ADDRP'     'NAME_TEXT'  TEXT-004. " 姓 名
   PERFORM frm_set_fcat USING 'TEL_NUMBER' 'ADCP'           'TEL_NUMBER' TEXT-005. " 维护手机号
   PERFORM frm_set_fcat USING 'PHONE'      'ZTWX_USER_INFO' 'PHONE'      TEXT-006. " 关联手机号
-  PERFORM frm_set_fcat USING 'USERID'     'ZTWX_USER_INFO' 'USERID'     TEXT-007. " 企微账户id
-  PERFORM frm_set_fcat USING 'CREATED_ON' 'ZTWX_USER_INFO' 'CREATED_ON' TEXT-008. " 首次拉取时间
-  PERFORM frm_set_fcat USING 'CHANGED_ON' 'ZTWX_USER_INFO' 'CHANGED_ON' TEXT-009. " 上次拉取时间
+  PERFORM frm_set_fcat USING 'SMTP_ADDR'  'ADR6'           'SMTP_ADDR'  TEXT-007. " 维护邮箱
+  "PERFORM frm_set_fcat USING 'EMAIL'      'ZTWX_USER_INFO' 'EMAIL'     TEXT-008. " 关联邮箱
+  PERFORM frm_set_fcat USING 'USERID'     'ZTWX_USER_INFO' 'USERID'     TEXT-009. " 企微账户id
+  PERFORM frm_set_fcat USING 'CREATED_ON' 'ZTWX_USER_INFO' 'CREATED_ON' TEXT-010. " 首次拉取时间
+  PERFORM frm_set_fcat USING 'CHANGED_ON' 'ZTWX_USER_INFO' 'CHANGED_ON' TEXT-011. " 上次拉取时间
 ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form FRM_SET_FCAT
@@ -264,7 +290,8 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
     WHEN '&IC1'.
       READ TABLE gt_display INTO DATA(ls_display) INDEX ps_selfield-tabindex.
       IF sy-subrc = 0.
-
+        SET PARAMETER ID 'XUS' FIELD ls_display-bname.
+        CALL TRANSACTION 'SU01'.
       ENDIF.
     WHEN '&NTE'.
       PERFORM frm_get_data.
