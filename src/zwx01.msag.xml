@@ -47,6 +47,24 @@
     <T100>
      <SPRSL>1</SPRSL>
      <ARBGB>ZWX01</ARBGB>
+     <MSGNR>007</MSGNR>
+     <TEXT>尝试将状态更新为 &amp;1</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>008</MSGNR>
+     <TEXT>推送信息已被删除，无法重新发起</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
+     <MSGNR>009</MSGNR>
+     <TEXT>推送信息已被删除，无法重新查看原始信息</TEXT>
+    </T100>
+    <T100>
+     <SPRSL>1</SPRSL>
+     <ARBGB>ZWX01</ARBGB>
      <MSGNR>101</MSGNR>
      <TEXT>请选择一行数据</TEXT>
     </T100>

@@ -132,6 +132,21 @@ FORM frm_get_data .
       AND apusr IN @s_apusr
       AND apsta IN @s_apsta.
 
+  " >> 补充数据 【未审批的内容】
+  IF s_stamp[] IS NOT INITIAL.
+    SELECT
+      *
+      FROM ztwx_approval
+      APPENDING CORRESPONDING FIELDS OF TABLE @gt_display
+      WHERE aptyp IN @s_aptyp
+        AND ap_no IN @s_ap_no
+        AND docum IN @s_sp_no
+        AND docum IN @s_docum
+        AND statu = 'S'
+        AND apsta <= 1.
+  ENDIF.
+  " <<
+
   IF gt_display IS INITIAL.
     " 未找到满足条件的数据
     MESSAGE s003(zwechat) DISPLAY LIKE 'E'.
@@ -367,6 +382,7 @@ FORM frm_user_command USING p_ucomm LIKE sy-ucomm
 
         IF ps_selfield-fieldname = 'ZFSSJ'.
           " 显示发送数据
+          CHECK ls_display-zfssj IS NOT INITIAL.
           PERFORM frm_show_send_data USING ls_display-ap_no.
         ELSEIF ps_selfield-fieldname = 'NODES'.
           " 显示流程信息
@@ -655,8 +671,17 @@ FORM frm_show_send_data  USING p_ap_no TYPE ty_display-ap_no.
         END OF ls_key.
   DATA: lv_json TYPE string.
 
-  ls_key-ap_no = p_ap_no.
+  " 检查历史数据是否还在
+  SELECT
+    COUNT( * )
+    FROM ztwx_log_data
+    WHERE ap_no = p_ap_no.
+  IF sy-subrc <> 0.
+    " 推送信息已被删除，无法重新查看原始信息
+    MESSAGE e009(zwx01) DISPLAY LIKE 'I'.
+  ENDIF.
 
+  ls_key-ap_no = p_ap_no.
   IMPORT json = lv_json FROM DATABASE ztwx_log_data(zz) ID ls_key.
 
   IF sy-subrc = 0.
@@ -691,6 +716,16 @@ FORM frm_resend_data USING p_tabindex.
 
   IF ls_display-statu <> 'E'.
     RETURN.
+  ENDIF.
+
+  " 检查历史数据是否还在
+  SELECT
+    COUNT( * )
+    FROM ztwx_log_data
+    WHERE ap_no = ls_display-ap_no.
+  IF sy-subrc <> 0.
+    " 推送信息已被删除，无法重新发起
+    MESSAGE e008(zwx01) DISPLAY LIKE 'I'.
   ENDIF.
 
   PERFORM frm_popup_message USING 'Confirm' '是否确认重新发送数据' CHANGING l_answer.
