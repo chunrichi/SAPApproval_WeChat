@@ -27,7 +27,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_WX_OA_FC_MONEY IMPLEMENTATION.
+CLASS zcl_wx_oa_fc_money IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -38,7 +38,7 @@ CLASS ZCL_WX_OA_FC_MONEY IMPLEMENTATION.
 
   METHOD set.
 
-    me->value-new_money = data.
+    me->value-new_money = |{ data }|.
 
     instance = me.
   ENDMETHOD.
