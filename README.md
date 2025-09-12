@@ -2,6 +2,10 @@
 
 This framework simplifies the development of approval functions in WeChatWork by providing pre-built components and templates.
 
+## News
+
+🎉 Now you can upload this project directly in ABAP Trial Docker!
+
 ## Features
 
 - **Approval Process Management**: Create, send and track approval requests
