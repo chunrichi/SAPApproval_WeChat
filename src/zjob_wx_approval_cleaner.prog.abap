@@ -124,21 +124,21 @@ FORM frm_clean_data .
     lv_datum = sy-datum - p_ed01.
     CONVERT DATE lv_datum TIME lv_uzeit INTO TIME STAMP lv_timestamp TIME ZONE 'UTC+8'.
 
-    DELETE FROM ztwx_log_data WHERE ap_no IN ( SELECT ap_no FROM ztwx_approval WHERE changed_at <= @lv_timestamp ).
+    DELETE FROM ztwx_log_data WHERE ap_no IN ( SELECT ap_no FROM ztwx_approval WHERE stamp <= @lv_timestamp ).
   ENDIF.
 
   IF p_evet = 'X'.
     lv_datum = sy-datum - p_ed02.
     CONVERT DATE lv_datum TIME lv_uzeit INTO TIME STAMP lv_timestamp TIME ZONE 'UTC+8'.
 
-    DELETE FROM ztwx_log_event WHERE ap_no IN ( SELECT ap_no FROM ztwx_approval WHERE changed_at <= @lv_timestamp ).
+    DELETE FROM ztwx_log_event WHERE ap_no IN ( SELECT ap_no FROM ztwx_approval WHERE stamp <= @lv_timestamp ).
   ENDIF.
 
   IF p_appr = 'X'.
     lv_datum = sy-datum - p_ed03.
     CONVERT DATE lv_datum TIME lv_uzeit INTO TIME STAMP lv_timestamp TIME ZONE 'UTC+8'.
 
-    DELETE FROM ztwx_approval WHERE changed_at <= @lv_timestamp.
+    DELETE FROM ztwx_approval WHERE stamp <= @lv_timestamp.
   ENDIF.
 
   COMMIT WORK.

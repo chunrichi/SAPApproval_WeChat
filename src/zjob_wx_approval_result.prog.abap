@@ -51,7 +51,12 @@ AT SELECTION-SCREEN.
 *&----------------------------------------------------------------------
 START-OF-SELECTION.
 
+  " 程序加锁
+  PERFORM frm_lock_prog.
+
   PERFORM frm_get_data.
+
+  PERFORM frm_dequeue_prog.
 
 *----------------------------------------------------------------------*
 *       CLASS lcl_progress_bar DEFINITION
@@ -120,6 +125,49 @@ CLASS lcl_progress_bar IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 ENDCLASS.
+*&---------------------------------------------------------------------*
+*& Form frm_lock_prog
+*&---------------------------------------------------------------------*
+*& 程序加锁 避免增量处理时同时运行
+*&---------------------------------------------------------------------*
+FORM frm_lock_prog .
+  CALL FUNCTION 'ENQUEUE_ES_PROG'
+    EXPORTING
+      mode_trdir     = 'E'
+      name           = sy-cprog
+      x_name         = ' '
+      _scope         = '2'
+      _wait          = 'X'
+      _collect       = ' '
+    EXCEPTIONS
+      foreign_lock   = 1
+      system_failure = 2
+      OTHERS         = 3.
+  IF sy-subrc <> 0.
+    IF sy-msgid = 'MC' AND sy-msgty = 'E' AND sy-msgno = '601'.
+      MESSAGE ID 'ZWX01' TYPE sy-msgty NUMBER 011
+        WITH sy-msgv1 sy-cprog.
+    ELSE.
+      MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+        WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_dequeue_prog
+*&---------------------------------------------------------------------*
+*&  解锁
+*&---------------------------------------------------------------------*
+FORM frm_dequeue_prog .
+  CALL FUNCTION 'DEQUEUE_ES_PROG'
+    EXPORTING
+      mode_trdir = 'E'
+      name       = sy-cprog
+      x_name     = ' '
+      _scope     = '3'
+      _synchron  = ' '
+      _collect   = ' '.
+ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form frm_get_data
 *&---------------------------------------------------------------------*
