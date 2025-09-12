@@ -95,6 +95,7 @@ CLASS zcl_wx_approval_result IMPLEMENTATION.
       ENDTRY.
 
       TRY.
+          lr_if->apsta = me->approvals[ 1 ]-apsta.
 
           lr_if->process_result( sp_no = me->approvals[ 1 ]-sp_no
                                  apsta = me->approvals[ 1 ]-apsta ).

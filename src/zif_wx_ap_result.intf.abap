@@ -3,6 +3,8 @@ INTERFACE zif_wx_ap_result
 
   DATA: log_event TYPE REF TO zcl_wx_log_event.
 
+  DATA: apsta TYPE ztwx_approval-apsta.
+
   METHODS granted IMPORTING sp_no TYPE ztwx_approval-sp_no.
   METHODS rejected IMPORTING sp_no TYPE ztwx_approval-sp_no.
   METHODS process_result IMPORTING sp_no TYPE ztwx_approval-sp_no

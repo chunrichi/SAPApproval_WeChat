@@ -10,6 +10,7 @@ CLASS zcl_wx_log_event DEFINITION
     METHODS constructor IMPORTING !ap_no TYPE ztwx_approval-ap_no OPTIONAL.
     METHODS log IMPORTING !evnid          TYPE ztwx_log_event-evnid
                           !parms          TYPE data OPTIONAL
+                          !local          TYPE abap_bool DEFAULT abap_false
                 RETURNING VALUE(instance) TYPE REF TO zcl_wx_log_event.
     METHODS commit.
   PROTECTED SECTION.
@@ -20,7 +21,7 @@ ENDCLASS.
 
 
 
-CLASS ZCL_WX_LOG_EVENT IMPLEMENTATION.
+CLASS zcl_wx_log_event IMPLEMENTATION.
 
 
   METHOD constructor.
@@ -46,7 +47,7 @@ CLASS ZCL_WX_LOG_EVENT IMPLEMENTATION.
     me->evnnm = me->evnnm + 1.
 
     me->elog-ap_no = me->ap_no.
-    me->elog-evnnm = me->evnnm.
+    me->elog-evnnm = me->evnnm MOD 1000.
     me->elog-evnid = to_upper( evnid ).
     me->elog-parms = parms.
 
@@ -54,7 +55,12 @@ CLASS ZCL_WX_LOG_EVENT IMPLEMENTATION.
     me->elog-changer = sy-uname.
     GET TIME STAMP FIELD me->elog-changed_at.
 
-    MODIFY ztwx_log_event CONNECTION r/3*wechat FROM @me->elog.
+    " 由于更新的主键不同 不会由于 session 的不同 导致 hana 更新的时候互锁卡死
+    IF local = abap_true.
+      MODIFY ztwx_log_event FROM @me->elog.
+    ELSE.
+      MODIFY ztwx_log_event CONNECTION r/3*wechat FROM @me->elog.
+    ENDIF.
 
     instance = me.
 
