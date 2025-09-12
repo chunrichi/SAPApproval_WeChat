@@ -87,7 +87,7 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     SELECT SINGLE
       phone,
       userid,
-      created_on
+      created_at
       FROM ztwx_user_info
       WHERE uname = @uname
       INTO @DATA(ls_info_cache).
@@ -120,10 +120,10 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
       ls_user_info-phone = ls_sap_info-phone.
       ls_user_info-userid = userid.
 
-      IF ls_info_cache-created_on IS INITIAL.
-        GET TIME STAMP FIELD ls_user_info-created_on.
+      IF ls_info_cache-created_at IS INITIAL.
+        GET TIME STAMP FIELD ls_user_info-created_at.
       ENDIF.
-      GET TIME STAMP FIELD ls_user_info-changed_on.
+      GET TIME STAMP FIELD ls_user_info-changed_at.
 
       MODIFY ztwx_user_info FROM ls_user_info.
     ENDIF.

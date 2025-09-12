@@ -3,14 +3,13 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <DD01V>
-    <DOMNAME>ZDWX_STAMP</DOMNAME>
+    <DOMNAME>ZDWX_STAMP_S</DOMNAME>
     <DDLANGUAGE>1</DDLANGUAGE>
     <DATATYPE>DEC</DATATYPE>
-    <LENG>000021</LENG>
-    <OUTPUTLEN>000027</OUTPUTLEN>
-    <DECIMALS>000007</DECIMALS>
+    <LENG>000015</LENG>
+    <OUTPUTLEN>000019</OUTPUTLEN>
     <CONVEXIT>TSTLC</CONVEXIT>
-    <DDTEXT>时戳</DDTEXT>
+    <DDTEXT>时戳 短</DDTEXT>
    </DD01V>
   </asx:values>
  </asx:abap>

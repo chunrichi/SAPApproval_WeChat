@@ -19,8 +19,8 @@ TYPES: BEGIN OF ty_display,
          smtp_addr  TYPE adr6-smtp_addr,            " 维护邮箱
          " email      TYPE string,                    " 关联邮箱
          userid     TYPE ztwx_user_info-userid,     " 企微账户id
-         created_on TYPE ztwx_user_info-created_on, " 首次拉取时间
-         changed_on TYPE ztwx_user_info-changed_on, " 上次拉取时间
+         created_at TYPE ztwx_user_info-created_at, " 首次拉取时间
+         changed_at TYPE ztwx_user_info-changed_at, " 上次拉取时间
 
          box        TYPE char1,        " -
          icon       TYPE char4,        " 结果
@@ -80,8 +80,8 @@ FORM frm_get_data .
       us~name_text,
       zt~phone,
       zt~userid,
-      zt~created_on,
-      zt~changed_on
+      zt~created_at,
+      zt~changed_at
       FROM user_addrp AS us
       LEFT JOIN ztwx_user_info AS zt ON zt~uname = us~bname
       INTO CORRESPONDING FIELDS OF TABLE @gt_display.
@@ -92,8 +92,8 @@ FORM frm_get_data .
       us~name_text,
       zt~phone,
       zt~userid,
-      zt~created_on,
-      zt~changed_on
+      zt~created_at,
+      zt~changed_at
       FROM user_addrp AS us
       INNER JOIN ztwx_user_info AS zt ON zt~uname = us~bname
       INTO CORRESPONDING FIELDS OF TABLE @gt_display.
