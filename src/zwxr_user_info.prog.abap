@@ -215,8 +215,8 @@ FORM frm_set_fieldcat .
   PERFORM frm_set_fcat USING 'SMTP_ADDR'  'ADR6'           'SMTP_ADDR'  TEXT-007. " 维护邮箱
   "PERFORM frm_set_fcat USING 'EMAIL'      'ZTWX_USER_INFO' 'EMAIL'     TEXT-008. " 关联邮箱
   PERFORM frm_set_fcat USING 'USERID'     'ZTWX_USER_INFO' 'USERID'     TEXT-009. " 企微账户id
-  PERFORM frm_set_fcat USING 'CREATED_ON' 'ZTWX_USER_INFO' 'CREATED_ON' TEXT-010. " 首次拉取时间
-  PERFORM frm_set_fcat USING 'CHANGED_ON' 'ZTWX_USER_INFO' 'CHANGED_ON' TEXT-011. " 上次拉取时间
+  PERFORM frm_set_fcat USING 'CREATED_AT' 'ZTWX_USER_INFO' 'CREATED_AT' TEXT-010. " 首次拉取时间
+  PERFORM frm_set_fcat USING 'CHANGED_AT' 'ZTWX_USER_INFO' 'CHANGED_AT' TEXT-011. " 上次拉取时间
 ENDFORM.
 *&---------------------------------------------------------------------*
 *& Form FRM_SET_FCAT
