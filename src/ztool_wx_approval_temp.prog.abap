@@ -231,7 +231,7 @@ FORM frm_load_template_info .
     APPEND |" 控件: { ls_tmpc-property-control } { ls_text-text }| TO lt_string.
     DATA(l_name) = |l_{ l_index }_{ to_lower( ls_tmpc-property-control ) }|.
     IF ls_tmpc-config IS NOT INITIAL AND ls_tmpc-config[ 1 ]-config-type IS NOT INITIAL.
-      DATA(l_init_info) = ` type = ` && l_name && `=>` && ls_tmpc-config[ 1 ]-config-type && ` `.
+      DATA(l_init_info) = ` type = zcl_wx_oa_fc_` && to_lower( ls_tmpc-property-control ) && `=>` && ls_tmpc-config[ 1 ]-config-type && ` `.
     ELSE.
       CLEAR l_init_info.
     ENDIF.
@@ -252,7 +252,7 @@ FORM frm_load_template_info .
     ENDIF.
 
     APPEND |{ l_reqire } DATA({ l_name }) = NEW zcl_wx_oa_fc_{ to_lower( ls_tmpc-property-control )
-    }( { l_id_input } `{ ls_tmpc-property-id }`{ l_init_info }| TO lt_string.
+    }( { l_id_input } `{ ls_tmpc-property-id }`{ l_init_info }| TO lt_string REFERENCE INTO DATA(l_last_str).
 
     CASE ls_tmpc-property-control.
       WHEN `Text` OR `Textarea`.
@@ -264,17 +264,24 @@ FORM frm_load_template_info .
       WHEN `Date`.
         APPEND |{ l_reqire })->set( '<fixme>' ).| TO lt_string.
       WHEN `Selector`.
+        l_last_str->* = l_last_str->* && `).`.
+
         IF ls_tmpc-config[ 1 ]-config-type = `single`.
-          DATA(l_selector) = `" `.
+
+          APPEND |{ l_reqire } CASE <fixme>.| TO lt_string.
+          LOOP AT ls_tmpc-config[ 1 ]-config-options INTO DATA(l_opt).
+            _read_text l_opt-value.
+
+            APPEND |{ l_reqire }  WHEN '{ ls_text-text }'. " { ls_text-text }| TO lt_string.
+            APPEND |{ l_reqire }    { l_name }->set( VALUE #( ( key = '{ l_opt-key }' ) ) ).| TO lt_string.
+          ENDLOOP.
+          APPEND |{ l_reqire }  WHEN OTHERS.| TO lt_string.
+          APPEND |{ l_reqire } ENDCASE.| TO lt_string.
+        ELSE.
+
+          APPEND |" { l_name }->add( value #( key = '{ l_opt-key }' ) ).| TO lt_string.
         ENDIF.
 
-        APPEND |{ l_reqire } )->set( VALUE #( | TO lt_string.
-        LOOP AT ls_tmpc-config[ 1 ]-config-options INTO DATA(l_opt).
-          _read_text l_opt-value.
-          APPEND |{ l_reqire }{ l_selector }  ( key = '{ l_opt-key }' ) " { ls_text-text }| TO lt_string.
-          CLEAR l_selector.
-        ENDLOOP.
-        APPEND |{ l_reqire } ). " { ls_text-text }| TO lt_string.
       WHEN `File`.
         APPEND |{ l_reqire }APPEND VALUE #(| TO lt_string.
         APPEND |{ l_reqire }  file_id   = '<fixme>' " 使用 zcl_wechat_approval->meida_upload( ) 上载获取| TO lt_string.
