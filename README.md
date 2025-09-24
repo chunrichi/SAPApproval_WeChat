@@ -137,9 +137,7 @@ lo_processor->process_pending_approvals( ).
 ## Installation & Configuration
 
 1. **Installation**:
-   ```bash
-   abapGit pull https://github.com/chunrichi/SAPApproval_WeChat
-   ```
+   use abapgit to upload the `zip` file
 
 2. **Configuration**:
    - Update `zcl_wechat_config` with your WeChatWork credentials

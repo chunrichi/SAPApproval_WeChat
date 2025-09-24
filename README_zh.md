@@ -6,7 +6,7 @@
 
 ## 最新动态
 
-🎉 现已支持直接在 ABAP Trial Docker 上传本项目！
+🎉 现已支持直接在 ABAP Trial Docker 上传使用本项目！
 
 ## 功能特色
 
@@ -126,20 +126,10 @@ ENDMETHOD.
    - 更新 SAP 审批结果
    - 根据状态触发后续动作
 
-**配置示例：**
-```abap
-" 在 zjob_wx_approval_result 程序中
-DATA(lo_processor) = NEW zcl_wx_approval_result( ).
-lo_processor->set_check_interval( iv_minutes = 10 ). " 每 10 分钟检查一次
-lo_processor->process_pending_approvals( ).
-```
-
 ## 安装与配置
 
 1. **安装**：
-   ```bash
-   abapGit pull https://github.com/chunrichi/SAPApproval_WeChat
-   ```
+   使用 abapgit 上载 `zip` 文件
 
 2. **配置**：
    - 在 `zcl_wechat_config` 中填写企业微信凭证
