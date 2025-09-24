@@ -1,3 +1,5 @@
+[English](README.md) | [中文](README_zh.md)
+
 # SAP WeChatWork Approval Framework
 
 This framework simplifies the development of approval functions in WeChatWork by providing pre-built components and templates.
