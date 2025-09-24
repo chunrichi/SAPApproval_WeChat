@@ -35,6 +35,10 @@ CLASS zcl_wx_oa_fc_selector DEFINITION
       IMPORTING
                 !data           TYPE tt_option
       RETURNING VALUE(instance) TYPE REF TO zif_wx_oa_fc.
+
+    METHODS add
+      IMPORTING !data           TYPE ty_option
+      RETURNING VALUE(instance) TYPE REF TO zif_wx_oa_fc.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -65,6 +69,14 @@ CLASS ZCL_WX_OA_FC_SELECTOR IMPLEMENTATION.
     " todo: 添加检查
 
     me->value-selector-options = data.
+
+    instance = me.
+  ENDMETHOD.
+
+
+  METHOD add.
+
+    APPEND data TO me->value-selector-options.
 
     instance = me.
   ENDMETHOD.
