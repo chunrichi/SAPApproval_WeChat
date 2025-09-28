@@ -115,18 +115,18 @@ CLASS ZCL_WX_APPROVAL IMPLEMENTATION.
     ENDIF.
 
     DATA: ls_user_info TYPE ztwx_user_info.
+    ls_user_info-uname = uname.
     IF l_ecode = 200.
-      ls_user_info-uname = uname.
       ls_user_info-phone = ls_sap_info-phone.
       ls_user_info-userid = userid.
-
-      IF ls_info_cache-created_at IS INITIAL.
-        GET TIME STAMP FIELD ls_user_info-created_at.
-      ENDIF.
-      GET TIME STAMP FIELD ls_user_info-changed_at.
-
-      MODIFY ztwx_user_info FROM ls_user_info.
     ENDIF.
+
+    IF ls_info_cache-created_at IS INITIAL.
+      GET TIME STAMP FIELD ls_user_info-created_at.
+    ENDIF.
+    GET TIME STAMP FIELD ls_user_info-changed_at.
+
+    MODIFY ztwx_user_info FROM ls_user_info.
 
     me->set_apusr( uname ).
 
