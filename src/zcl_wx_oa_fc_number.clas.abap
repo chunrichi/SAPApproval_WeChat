@@ -42,6 +42,8 @@ CLASS ZCL_WX_OA_FC_NUMBER IMPLEMENTATION.
 
     me->value-new_number = |{ data }|.
 
+    CONDENSE me->value-new_number NO-GAPS.
+
     instance = me.
   ENDMETHOD.
 ENDCLASS.
