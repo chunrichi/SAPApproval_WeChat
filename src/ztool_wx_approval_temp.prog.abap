@@ -5,8 +5,6 @@
 *&---------------------------------------------------------------------*
 REPORT ztool_wx_approval_temp.
 
-" 账号密码暂使用明文
-
 *&----------------------------------------------------------------------
 *                     Types
 *&----------------------------------------------------------------------
@@ -152,8 +150,8 @@ FORM frm_load_template_info .
         END OF ls_res.
 
   DATA(l_client) = NEW zcl_wechat_http(
-    corpid     = zcl_wechat_config=>config-corp_id
-    corpsecret = zcl_wechat_config=>config-corp_secret ).
+    corpid     = zcl_wx_config=>config-corp_id
+    corpsecret = zcl_wx_config=>config-corp_secret ).
 
   DATA: BEGIN OF ls_req,
           template_id TYPE string,
@@ -200,25 +198,41 @@ FORM frm_load_template_info .
     ENDIF.
   END-OF-DEFINITION.
 
-  APPEND |DATA(l_approval) = NEW zcl_wx_approval( ).| TO lt_string.
+  " method constructor
+  APPEND |METHOD constructor.| TO lt_string.
+
+  APPEND |super->constructor( ).| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
+
+  APPEND |me->approval = NEW zcl_wx_approval( ).| TO lt_string.
 
   _read_text ls_res-template_names.
-  APPEND |" 审批标题: { ls_text-text }| TO lt_string.
+  APPEND |me->approval->set_aptyp( '<fixme>' ). " { ls_text-text }| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
-  APPEND |DATA(l_ft) = NEW zcl_wx_oa_ft(| TO lt_string.
+  APPEND |me->ft = NEW zcl_wx_oa_ft(| TO lt_string.
   APPEND |  template_id = '{ p_tempid }'| TO lt_string.
   APPEND |).| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
-  APPEND |" 申请人userid| TO lt_string.
-  APPEND |l_ft->creator_userid = l_approval->userid( ).| TO lt_string.
+  " APPEND |" 申请人userid| TO lt_string.
+  " APPEND |l_ft->creator_userid = l_approval->userid( ).| TO lt_string.
+  " APPEND INITIAL LINE TO lt_string.
+
+  APPEND |ENDMETHOD.| TO lt_string.
+
+  " method map
+  APPEND |METHOD map.| TO lt_string.
+  APPEND |instance = me.| TO lt_string.
+  APPEND |/zwx/log.| TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
+  APPEND |" me->approval->set_docum(  ).| TO lt_string.
+  APPEND |" me->approval->set_mnote(  ).| TO lt_string.
+  APPEND INITIAL LINE TO lt_string.
 
   APPEND |" 摘要信息| TO lt_string.
-  APPEND `l_ft->set_summary( VALUE #( ( text = '摘要1' lang = 'zh_CN' ) ) ).` TO lt_string.
+  APPEND `me->ft->set_summary( VALUE #( ( text = '摘要1' lang = 'zh_CN' ) ) ).` TO lt_string.
   APPEND INITIAL LINE TO lt_string.
 
   APPEND |" ------------------- 控件赋值 ----------------------| TO lt_string.
@@ -316,15 +330,14 @@ FORM frm_load_template_info .
     ENDCASE.
 
     " 添加到正文
-    APPEND |{ l_reqire }APPEND CAST zif_wx_oa_fc( { l_name } ) TO l_ft->apply_data-contents.| TO lt_string.
+    APPEND |{ l_reqire }APPEND CAST zif_wx_oa_fc( { l_name } ) TO me->ft->apply_data-contents.| TO lt_string.
 
     APPEND INITIAL LINE TO lt_string.
 
   ENDLOOP.
 
-  APPEND |" ------------------- 发起审批 ----------------------| TO lt_string.
-  APPEND `DATA(ls_result) = l_approval->send( EXPORTING data = l_ft ).` TO lt_string.
   APPEND INITIAL LINE TO lt_string.
+  APPEND |ENDMETHOD.| TO lt_string.
 
 
   gr_abap_edit = NEW #( parent = cl_gui_container=>screen0  ).
